@@ -1663,9 +1663,9 @@ class ApiV1Controller extends Controller
 
             $stats = Cache::remember('api:v1:instance-data:stats', 43200, function () {
                 return [
-                    'user_count' => User::count(),
-                    'status_count' => StatusService::totalLocalStatuses(),
-                    'domain_count' => Instance::count(),
+                    'user_count' => (int) User::count(),
+                    'status_count' => (int) StatusService::totalLocalStatuses(),
+                    'domain_count' => (int) Instance::count(),
                 ];
             });
 
