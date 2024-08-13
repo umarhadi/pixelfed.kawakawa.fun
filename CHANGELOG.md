@@ -4,6 +4,7 @@
 
 ### Added
 - Implement Admin Domain Blocks API (Mastodon API Compatible) [ThisIsMissEm](https://github.com/ThisIsMissEm) ([#5021](https://github.com/pixelfed/pixelfed/pull/5021))
+- Authorize Interaction support (for handling remote interactions) ([4ca7c6c3](https://github.com/pixelfed/pixelfed/commit/4ca7c6c3))
 
 ### Updates
 - Update ApiV1Controller, add support for notification filter types ([f61159a1](https://github.com/pixelfed/pixelfed/commit/f61159a1))
@@ -14,7 +15,7 @@
 - Update instance config, update network cache feed max_hours_old falloff to 90 days instead of 6 hours to allow for less active instances to have more results ([c042d135](https://github.com/pixelfed/pixelfed/commit/c042d135))
 - Update ApiV1Dot1Controller, add new single media status create endpoint ([b03f5cec](https://github.com/pixelfed/pixelfed/commit/b03f5cec))
 - Update AdminSettings component, add link to Custom CSS settings ([958daac4](https://github.com/pixelfed/pixelfed/commit/958daac4))
--  ([](https://github.com/pixelfed/pixelfed/commit/))
+- Update ApiV1Controller, fix v1/instance stats, force cast to int ([dcd95d68](https://github.com/pixelfed/pixelfed/commit/dcd95d68))
 -  ([](https://github.com/pixelfed/pixelfed/commit/))
 
 ## [v0.12.3 (2024-07-01)](https://github.com/pixelfed/pixelfed/compare/v0.12.2...v0.12.3)

@@ -5,6 +5,7 @@ Route::domain(config('pixelfed.domain.app'))->middleware(['validemail', 'twofact
     Route::redirect('/home', '/')->name('home');
     Route::get('web/directory', 'LandingController@directoryRedirect');
     Route::get('web/explore', 'LandingController@exploreRedirect');
+    Route::get('authorize_interaction', 'AuthorizeInteractionController@get');
 
     Auth::routes();
     Route::get('auth/raw/mastodon/start', 'RemoteAuthController@startRedirect');
@@ -67,7 +68,7 @@ Route::domain(config('pixelfed.domain.app'))->middleware(['validemail', 'twofact
         Route::get('lang/{locale}', 'SiteController@changeLocale');
         Route::get('restored', 'AccountController@accountRestored');
 
-        Route::get('verify-email', 'AccountController@verifyEmail');
+        Route::get('verify-email', 'AccountController@verifyEmail')->name('account.verify_email');
         Route::post('verify-email', 'AccountController@sendVerifyEmail');
         Route::get('verify-email/request', 'InternalApiController@requestEmailVerification');
         Route::post('verify-email/request', 'InternalApiController@requestEmailVerificationStore');
