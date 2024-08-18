@@ -51,6 +51,10 @@ class BeagleService
 
     public static function getDiscover()
     {
+        if ((bool) config_cache('federation.activitypub.enabled') == false) {
+            return [];
+        }
+
         return Cache::remember(self::DISCOVER_CACHE_KEY, now()->addHours(6), function () {
             try {
                 $res = Http::withOptions(['allow_redirects' => false])
@@ -84,6 +88,10 @@ class BeagleService
 
     public static function getDiscoverPosts()
     {
+        if ((bool) config_cache('federation.activitypub.enabled') == false) {
+            return [];
+        }
+
         return Cache::remember(self::DISCOVER_POSTS_CACHE_KEY, now()->addHours(1), function () {
             $posts = collect(self::getDiscover())
                 ->filter(function ($post) {

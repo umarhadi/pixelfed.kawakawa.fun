@@ -16,6 +16,7 @@
 - Update ApiV1Dot1Controller, add new single media status create endpoint ([b03f5cec](https://github.com/pixelfed/pixelfed/commit/b03f5cec))
 - Update AdminSettings component, add link to Custom CSS settings ([958daac4](https://github.com/pixelfed/pixelfed/commit/958daac4))
 - Update ApiV1Controller, fix v1/instance stats, force cast to int ([dcd95d68](https://github.com/pixelfed/pixelfed/commit/dcd95d68))
+- Update BeagleService, disable discovery if AP is disabled ([6cd1cbb4](https://github.com/pixelfed/pixelfed/commit/6cd1cbb4))
 -  ([](https://github.com/pixelfed/pixelfed/commit/))
 
 ## [v0.12.3 (2024-07-01)](https://github.com/pixelfed/pixelfed/compare/v0.12.2...v0.12.3)
