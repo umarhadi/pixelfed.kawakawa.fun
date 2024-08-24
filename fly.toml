@@ -1,0 +1,118 @@
+# fly.toml app configuration file generated for pixelfed on 2023-05-22T23:59:12+07:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = "pixelfed"
+primary_region = "sin"
+kill_signal = "SIGINT"
+kill_timeout = "5s"
+
+[experimental]
+  auto_rollback = true
+
+[env]
+  ACCOUNT_DELETE_AFTER = "f"
+  ACCOUNT_DELETION = "t"
+  ACTIVITY_PUB = "t"
+  ADMIN_DOMAIN = "ig.umarhadi.dev"
+  ADMIN_ENV_EDITOR = "t"
+  APP_DEBUG = "f"
+  APP_DOMAIN = "ig.umarhadi.dev"
+  APP_ENV = "production"
+  APP_LOCALE = "en"
+  APP_NAME = "very pixelfed"
+  APP_TIMEZONE = "UTC+7"
+  APP_URL = "https://ig.umarhadi.dev"
+  AP_INBOX = "t"
+  AP_LOGGER_ENABLED = "t"
+  AP_OUTBOX = "t"
+  AP_REMOTE_FOLLOW = "t"
+  AP_SHAREDINBOX = "t"
+  ATOM_FEEDS = "t"
+  AWS_BUCKET = "pixelfed"
+  AWS_DEFAULT_REGION = "auto"
+  AWS_USE_PATH_STYLE_ENDPOINT = "f"
+  BROADCAST_DRIVER = "log"
+  CACHE_DRIVER = "redis"
+  CUSTOM_EMOJI = "t"
+  DB_CONNECTION = "pgsql"
+  ENABLE_CONFIG_CACHE = "t"
+  ENFORCE_EMAIL_VERIFICATION = "t"
+  EXP_LC = "f"
+  EXP_LOOPS = "f"
+  EXP_REC = "f"
+  FILESYSTEM_CLOUD = "s3"
+  HORIZON_DARKMODE = "t"
+  HORIZON_MEMORY_LIMIT = "64"
+  HORIZON_PREFIX = "horizon-"
+  IMAGE_DRIVER = "gd"
+  IMAGE_QUALITY = "100"
+  IMPORT_INSTAGRAM = "t"
+  INSTANCE_CONTACT_EMAIL = "hi@umarhadi.dev"
+  INSTANCE_DESCRIPTION = "very photo sharing for everyone"
+  INSTANCE_DISCOVER_PUBLIC = "t"
+  INSTANCE_LANDING_SHOW_EXPLORE = "f"
+  INSTANCE_PUBLIC_HASHTAGS = "t"
+  INSTANCE_PUBLIC_LOCAL_TIMELINE = "t"
+  LIMIT_ACCOUNT_SIZE = "t"
+  LOG_CHANNEL = "stderr"
+  LOG_LEVEL = "info"
+  LOG_STDERR_FORMATTER = "Monolog\\Formatter\\JsonFormatter"
+  MAIL_DRIVER = "smtp"
+  MAIL_FROM_NAME = "Pixelfed"
+  MAX_ACCOUNT_SIZE = "100000000"
+  MAX_ALBUM_LENGTH = "10"
+  MAX_AVATAR_SIZE = "20000"
+  MAX_BIO_LENGTH = "250"
+  MAX_CAPTION_LENGTH = "5000"
+  MAX_LINKS_PER_POST = "0"
+  MAX_NAME_LENGTH = "50"
+  MAX_PHOTO_SIZE = "100000"
+  MEDIA_EXIF_DATABASE = "t"
+  MEDIA_TYPES = "image/jpg,image/jpeg,image/png,image/gif,video/mp4,video/mpeg,video/3gpp,video/quicktime"
+  NODEINFO = "t"
+  OAUTH_ENABLED = "t"
+  OPEN_REGISTRATION = "f"
+  PAGE_404_BODY = "The page you were looking for has been caught in a time loop and is stuck reliving the same day over and over again.🤣🤣"
+  PAGE_404_HEADER = "What you're looking for? 🤷🏻‍♂️"
+  PAGE_503_BODY = "We're sorry, but our website is currently undergoing some much-needed beauty sleep. Please check back later when it's feeling more refreshed."
+  PAGE_503_HEADER = "Under construction... and by construction, we mean destruction."
+  PF_BOUNCER_ENABLED = "t"
+  PF_COSTAR_ENABLED = "t"
+  PF_ENABLE_CLOUD = "t"
+  PF_LOCAL_AVATAR_TO_CLOUD = "t"
+  PF_MAX_USERS = "1000"
+  PF_OPTIMIZE_IMAGES = "t"
+  PF_OPTIMIZE_VIDEOS = "t"
+  QUEUE_DRIVER = "redis"
+  REDIS_CLIENT = "phpredis"
+  REDIS_DATABASE = "6"
+  REDIS_PORT = "6379"
+  REDIS_SCHEME = "tcp"
+  RESTRICT_HTML_TYPES = "t"
+  SESSION_DOMAIN = "ig.umarhadi.dev"
+  SESSION_DRIVER = "redis"
+  STORIES_ENABLED = "f"
+  TRUST_PROXIES = "*"
+  WEBFINGER = "t"
+
+[[mounts]]
+  source = "pixelfed_storage_machines"
+  destination = "/var/www/storage"
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 80
+  processes = ["app"]
+  auto_stop_machines = true
+  auto_start_machines = true
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
