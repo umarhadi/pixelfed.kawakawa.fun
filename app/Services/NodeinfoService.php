@@ -60,7 +60,7 @@ class NodeinfoService
         $hrefDomain = parse_url($href, PHP_URL_HOST);
 
         if($domain !== $hrefDomain) {
-            return 60;
+            return false;
         }
 
         try {
