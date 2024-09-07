@@ -1371,12 +1371,10 @@ class Inbox
         }
 
         Bus::chain([
-            new ProcessMovePipeline,
-            new MoveMigrateFollowersPipeline,
-            new UnfollowLegacyAccountMovePipeline,
-            new CleanupLegacyAccountMovePipeline,
-        ])
-            ->onQueue('move')
-            ->dispatch($target, $activity);
+            new ProcessMovePipeline($target, $activity),
+            new MoveMigrateFollowersPipeline($target, $activity),
+            new UnfollowLegacyAccountMovePipeline($target, $activity),
+            new CleanupLegacyAccountMovePipeline($target, $activity),
+        ])->onQueue('move')->dispatch();
     }
 }
