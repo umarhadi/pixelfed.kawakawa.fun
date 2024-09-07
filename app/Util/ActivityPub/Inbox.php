@@ -1375,6 +1375,6 @@ class Inbox
             new MoveMigrateFollowersPipeline($target, $activity),
             new UnfollowLegacyAccountMovePipeline($target, $activity),
             new CleanupLegacyAccountMovePipeline($target, $activity),
-        ])->onQueue('move')->dispatchSync();
+        ])->onQueue('move')->dispatch();
     }
 }
