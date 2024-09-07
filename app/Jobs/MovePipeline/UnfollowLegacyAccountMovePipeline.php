@@ -51,7 +51,7 @@ class UnfollowLegacyAccountMovePipeline implements ShouldQueue
     public function middleware(): array
     {
         return [
-            new WithoutOverlapping('process-move-undo-legacy-followers:'.$this->activity),
+            new WithoutOverlapping('process-move-undo-legacy-followers:'.$this->target),
             (new ThrottlesExceptions(2, 5 * 60))->backoff(5),
         ];
     }
@@ -62,16 +62,6 @@ class UnfollowLegacyAccountMovePipeline implements ShouldQueue
     public function retryUntil(): DateTime
     {
         return now()->addMinutes(15);
-    }
-
-    /**
-     * Get the middleware the job should pass through.
-     *
-     * @return array<int, object>
-     */
-    public function middleware(): array
-    {
-        return [new WithoutOverlapping($this->target)];
     }
 
     /**
