@@ -66,16 +66,6 @@ class MoveMigrateFollowersPipeline implements ShouldQueue
     }
 
     /**
-     * Get the middleware the job should pass through.
-     *
-     * @return array<int, object>
-     */
-    public function middleware(): array
-    {
-        return [new WithoutOverlapping($this->target)];
-    }
-
-    /**
      * Execute the job.
      */
     public function handle(): void
