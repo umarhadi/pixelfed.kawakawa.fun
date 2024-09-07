@@ -3,8 +3,10 @@
 namespace App\Jobs\MovePipeline;
 
 use App\Services\ActivityPubFetchService;
+use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Middleware\ThrottlesExceptions;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 
 class ProcessMovePipeline implements ShouldQueue
@@ -14,6 +16,20 @@ class ProcessMovePipeline implements ShouldQueue
     public $target;
 
     public $activity;
+
+    /**
+     * The number of times the job may be attempted.
+     *
+     * @var int
+     */
+    public $tries = 6;
+
+    /**
+     * The maximum number of unhandled exceptions to allow before failing.
+     *
+     * @var int
+     */
+    public $maxExceptions = 3;
 
     /**
      * Create a new job instance.
@@ -31,7 +47,18 @@ class ProcessMovePipeline implements ShouldQueue
      */
     public function middleware(): array
     {
-        return [new WithoutOverlapping($this->target)];
+        return [
+            new WithoutOverlapping('process-move:'.$this->target),
+            (new ThrottlesExceptions(2, 5 * 60))->backoff(5),
+        ];
+    }
+
+    /**
+     * Determine the time at which the job should timeout.
+     */
+    public function retryUntil(): DateTime
+    {
+        return now()->addMinutes(15);
     }
 
     /**
@@ -39,13 +66,18 @@ class ProcessMovePipeline implements ShouldQueue
      */
     public function handle(): void
     {
+        if (config('app.env') !== 'production' || (bool) config_cache('federation.activitypub.enabled') == false) {
+            throw new Exception('Activitypub not enabled');
+        }
+
         if (! self::checkTarget()) {
-            return;
+            throw new Exception('Invalid target');
         }
 
         if (! self::checkActor()) {
-            return;
+            throw new Exception('Invalid actor');
         }
+
     }
 
     protected function checkTarget()
