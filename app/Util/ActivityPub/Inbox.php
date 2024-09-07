@@ -3,6 +3,7 @@
 namespace App\Util\ActivityPub;
 
 use Cache, DB, Log, Purify, Redis, Storage, Validator;
+use Illuminate\Support\Facades\Bus;
 use App\{
     Activity,
     DirectMessage,
@@ -30,6 +31,10 @@ use App\Jobs\StoryPipeline\StoryExpire;
 use App\Jobs\StoryPipeline\StoryFetch;
 use App\Jobs\StatusPipeline\StatusRemoteUpdatePipeline;
 use App\Jobs\ProfilePipeline\HandleUpdateActivity;
+use App\Jobs\MovePipeline\ProcessMovePipeline;
+use App\Jobs\MovePipeline\MoveMigrateFollowersPipeline;
+use App\Jobs\MovePipeline\UnfollowLegacyAccountMovePipeline;
+use App\Jobs\MovePipeline\CleanupLegacyAccountMovePipeline;
 
 use App\Util\ActivityPub\Validator\Accept as AcceptValidator;
 use App\Util\ActivityPub\Validator\Add as AddValidator;
@@ -38,6 +43,7 @@ use App\Util\ActivityPub\Validator\Follow as FollowValidator;
 use App\Util\ActivityPub\Validator\Like as LikeValidator;
 use App\Util\ActivityPub\Validator\UndoFollow as UndoFollowValidator;
 use App\Util\ActivityPub\Validator\UpdatePersonValidator;
+use App\Util\ActivityPub\Validator\MoveValidator;
 
 use App\Services\AccountService;
 use App\Services\PollService;
@@ -133,6 +139,14 @@ class Inbox
 
             case 'Update':
                 $this->handleUpdateActivity();
+                break;
+
+            case 'Move':
+                if(MoveValidator::validate($this->payload) == false) {
+                    \Log::info('[AP][INBOX][MOVE] VALIDATE_FAILURE ' . json_encode($this->payload));
+                    return;
+                }
+                $this->handleMoveActivity();
                 break;
 
             default:
@@ -1346,5 +1360,28 @@ class Inbox
                 HandleUpdateActivity::dispatch($this->payload)->onQueue('low');
             }
         }
+    }
+
+    public function handleMoveActivity()
+    {
+        $actor = $this->payload['actor'];
+        $activity = $this->payload['object'];
+        $target = $this->payload['target'];
+        if(
+            !Helpers::validateUrl($actor) ||
+            !Helpers::validateUrl($activity) ||
+            !Helpers::validateUrl($target)
+        ) {
+            return;
+        }
+
+        Bus::chain([
+            new ProcessMoveActivity,
+            new MoveMigrateFollowersPipeline,
+            new UnfollowLegacyAccountMovePipeline,
+            new CleanupLegacyAccountMovePipeline
+        ])
+        ->onQueue('move')
+        ->dispatch($target, $activity);
     }
 }
