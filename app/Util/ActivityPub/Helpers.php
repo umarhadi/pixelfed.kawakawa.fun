@@ -155,7 +155,7 @@ class Helpers
         return in_array($url, $audience['to']) || in_array($url, $audience['cc']);
     }
 
-    public static function validateUrl($url = null, $disableDNSCheck = false)
+    public static function validateUrl($url = null, $disableDNSCheck = false, $forceBanCheck = false)
     {
         if (is_array($url) && ! empty($url)) {
             $url = $url[0];
@@ -212,7 +212,7 @@ class Helpers
                 }
             }
 
-            if ($disableDNSCheck !== true && app()->environment() === 'production') {
+            if ($forceBanCheck || $disableDNSCheck !== true && app()->environment() === 'production') {
                 $bannedInstances = InstanceService::getBannedDomains();
                 if (in_array($host, $bannedInstances)) {
                     return false;
@@ -739,7 +739,7 @@ class Helpers
             $width = isset($media['width']) ? $media['width'] : false;
             $height = isset($media['height']) ? $media['height'] : false;
 
-            $media = new Media();
+            $media = new Media;
             $media->blurhash = $blurhash;
             $media->remote_media = true;
             $media->status_id = $status->id;
