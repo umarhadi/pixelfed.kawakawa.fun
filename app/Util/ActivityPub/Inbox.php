@@ -145,7 +145,6 @@ class Inbox
             case 'Move':
                 if (MoveValidator::validate($this->payload) == false) {
                     \Log::info('[AP][INBOX][MOVE] VALIDATE_FAILURE '.json_encode($this->payload));
-
                     return;
                 }
                 $this->handleMoveActivity();
@@ -1367,6 +1366,7 @@ class Inbox
             ! Helpers::validateUrl($activity) ||
             ! Helpers::validateUrl($target)
         ) {
+            \Log::info('[AP][INBOX][MOVE] validateUrl fail');
             return;
         }
 
@@ -1375,6 +1375,6 @@ class Inbox
             new MoveMigrateFollowersPipeline($target, $activity),
             new UnfollowLegacyAccountMovePipeline($target, $activity),
             new CleanupLegacyAccountMovePipeline($target, $activity),
-        ])->onQueue('move')->dispatch();
+        ])->onQueue('move')->dispatchSync();
     }
 }

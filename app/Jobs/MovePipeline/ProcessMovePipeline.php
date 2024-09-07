@@ -9,6 +9,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\ThrottlesExceptions;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use DateTime;
+use Log;
 
 class ProcessMovePipeline implements ShouldQueue
 {
@@ -86,11 +87,13 @@ class ProcessMovePipeline implements ShouldQueue
         $res = ActivityPubFetchService::fetchRequest($this->target, true);
 
         if (! $res || ! isset($res['alsoKnownAs'])) {
+            Log::info('[AP][INBOX][MOVE] target_aka failure');
             return false;
         }
 
         $res = Helpers::profileFetch($this->target);
         if (! $res) {
+            Log::info('[AP][INBOX][MOVE] target fetch failure');
             return false;
         }
 
@@ -112,11 +115,13 @@ class ProcessMovePipeline implements ShouldQueue
         $res = ActivityPubFetchService::fetchRequest($this->actor, true);
 
         if (! $res || ! isset($res['movedTo'])) {
+            Log::info('[AP][INBOX][MOVE] actor_movedTo failure');
             return false;
         }
 
         $res = Helpers::profileFetch($this->actor);
         if (! $res) {
+            Log::info('[AP][INBOX][MOVE] actor fetch failure');
             return false;
         }
 
