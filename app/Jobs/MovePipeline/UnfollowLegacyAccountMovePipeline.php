@@ -21,9 +21,11 @@ class UnfollowLegacyAccountMovePipeline implements ShouldQueue
     use Queueable;
 
     public string $target;
+
     public string $activity;
 
     public int $tries = 6;
+
     public int $maxExceptions = 3;
 
     public function __construct(string $target, string $activity)
@@ -53,7 +55,7 @@ class UnfollowLegacyAccountMovePipeline implements ShouldQueue
             $targetAccount = $this->fetchProfile($this->target);
             $actorAccount = $this->fetchProfile($this->activity);
 
-            if (!$targetAccount || !$actorAccount) {
+            if (! $targetAccount || ! $actorAccount) {
                 throw new Exception('Invalid move accounts');
             }
 
@@ -66,7 +68,7 @@ class UnfollowLegacyAccountMovePipeline implements ShouldQueue
             Log::error('UnfollowLegacyAccountMovePipeline failed', [
                 'target' => $this->target,
                 'activity' => $this->activity,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
             throw $e;
         }
@@ -74,7 +76,7 @@ class UnfollowLegacyAccountMovePipeline implements ShouldQueue
 
     private function validateEnvironment(): void
     {
-        if (config('app.env') !== 'production' || !(bool)config('federation.activitypub.enabled')) {
+        if (config('app.env') !== 'production' || ! (bool) config('federation.activitypub.enabled')) {
             throw new Exception('ActivityPub not enabled');
         }
     }
@@ -124,7 +126,7 @@ class UnfollowLegacyAccountMovePipeline implements ShouldQueue
     private function generateRequests($followers, string $targetInbox, int $targetPid): \Generator
     {
         foreach ($followers as $follower) {
-            if (!$this->isValidFollower($follower)) {
+            if (! $this->isValidFollower($follower)) {
                 continue;
             }
 

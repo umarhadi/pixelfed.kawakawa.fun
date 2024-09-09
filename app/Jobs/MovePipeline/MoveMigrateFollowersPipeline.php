@@ -10,22 +10,25 @@ use DB;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Pool;
+use GuzzleHttp\Psr7\Request;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\ThrottlesExceptionsWithRedis;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Log;
-use GuzzleHttp\Psr7\Request;
 
 class MoveMigrateFollowersPipeline implements ShouldQueue
 {
     use Queueable;
 
     public string $target;
+
     public string $activity;
 
     public int $tries = 15;
+
     public int $maxExceptions = 5;
+
     public int $timeout = 900;
 
     public function __construct(string $target, string $activity)
@@ -55,7 +58,7 @@ class MoveMigrateFollowersPipeline implements ShouldQueue
             $targetAccount = $this->fetchProfile($this->target);
             $actorAccount = $this->fetchProfile($this->activity);
 
-            if (!$targetAccount || !$actorAccount) {
+            if (! $targetAccount || ! $actorAccount) {
                 throw new Exception('Invalid move accounts');
             }
 
@@ -76,7 +79,7 @@ class MoveMigrateFollowersPipeline implements ShouldQueue
             Log::error('MoveMigrateFollowersPipeline failed', [
                 'target' => $this->target,
                 'activity' => $this->activity,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
             throw $e;
         }
@@ -84,7 +87,7 @@ class MoveMigrateFollowersPipeline implements ShouldQueue
 
     private function validateEnvironment(): void
     {
-        if (config('app.env') !== 'production' || !(bool)config('federation.activitypub.enabled')) {
+        if (config('app.env') !== 'production' || ! (bool) config('federation.activitypub.enabled')) {
             throw new Exception('ActivityPub not enabled');
         }
     }
@@ -121,7 +124,7 @@ class MoveMigrateFollowersPipeline implements ShouldQueue
     private function generateRequests($followers, string $targetInbox, int $targetPid): \Generator
     {
         foreach ($followers as $follower) {
-            if (!$this->isValidFollower($follower)) {
+            if (! $this->isValidFollower($follower)) {
                 continue;
             }
 
