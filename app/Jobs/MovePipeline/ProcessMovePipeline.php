@@ -3,12 +3,13 @@
 namespace App\Jobs\MovePipeline;
 
 use App\Services\ActivityPubFetchService;
+use DateTime;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\ThrottlesExceptions;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use DateTime;
+use Illuminate\Support\Arr;
 use Log;
 
 class ProcessMovePipeline implements ShouldQueue
@@ -88,12 +89,14 @@ class ProcessMovePipeline implements ShouldQueue
 
         if (! $res || ! isset($res['alsoKnownAs'])) {
             Log::info('[AP][INBOX][MOVE] target_aka failure');
+
             return false;
         }
 
         $res = Helpers::profileFetch($this->target);
         if (! $res) {
             Log::info('[AP][INBOX][MOVE] target fetch failure');
+
             return false;
         }
 
@@ -102,9 +105,16 @@ class ProcessMovePipeline implements ShouldQueue
         }
 
         if (is_array($res['alsoKnownAs'])) {
-            $map = array_map(self::lowerTrim(), $res['alsoKnownAs']);
+            $map = Arr::map($res['alsoKnownAs'], function ($value, $key) {
+                return trim(strtolower($value));
+            });
 
-            return in_array($this->actor, $map);
+            $res = in_array($this->actor, $map);
+            $debugMessage = $res ? '[AP][INBOX][MOVE] aka target is valid' : '[AP][INBOX][MOVE] aka target is invalid';
+
+            Log::info($debugMessage);
+
+            return $res;
         }
 
         return false;
@@ -116,12 +126,14 @@ class ProcessMovePipeline implements ShouldQueue
 
         if (! $res || ! isset($res['movedTo'])) {
             Log::info('[AP][INBOX][MOVE] actor_movedTo failure');
+
             return false;
         }
 
         $res = Helpers::profileFetch($this->actor);
         if (! $res) {
             Log::info('[AP][INBOX][MOVE] actor fetch failure');
+
             return false;
         }
 
