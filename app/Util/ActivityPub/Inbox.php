@@ -42,9 +42,11 @@ use App\Util\ActivityPub\Validator\MoveValidator;
 use App\Util\ActivityPub\Validator\UpdatePersonValidator;
 use Cache;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Purify;
 use Storage;
+use Throwable;
 
 class Inbox
 {
@@ -144,7 +146,8 @@ class Inbox
 
             case 'Move':
                 if (MoveValidator::validate($this->payload) == false) {
-                    \Log::info('[AP][INBOX][MOVE] VALIDATE_FAILURE '.json_encode($this->payload));
+                    Log::info('[AP][INBOX][MOVE] VALIDATE_FAILURE '.json_encode($this->payload));
+
                     return;
                 }
                 $this->handleMoveActivity();
@@ -1366,7 +1369,8 @@ class Inbox
             ! Helpers::validateUrl($activity) ||
             ! Helpers::validateUrl($target)
         ) {
-            \Log::info('[AP][INBOX][MOVE] validateUrl fail');
+            Log::info('[AP][INBOX][MOVE] validateUrl fail');
+
             return;
         }
 
@@ -1375,6 +1379,12 @@ class Inbox
             new MoveMigrateFollowersPipeline($target, $activity),
             new UnfollowLegacyAccountMovePipeline($target, $activity),
             new CleanupLegacyAccountMovePipeline($target, $activity),
-        ])->onQueue('move')->dispatch();
+        ])
+            ->catch(function (Throwable $e) {
+                Log::error($e);
+            })
+            ->onQueue('move')
+            ->dispatch()
+            ->delay(now()->addMinutes(random_int(5, 9)));
     }
 }
