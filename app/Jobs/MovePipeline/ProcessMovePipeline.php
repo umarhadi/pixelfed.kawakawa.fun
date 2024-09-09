@@ -61,7 +61,7 @@ class ProcessMovePipeline implements ShouldQueue
      */
     public function retryUntil(): DateTime
     {
-        return now()->addMinutes(15);
+        return now()->addMinutes(5);
     }
 
     /**
@@ -80,7 +80,7 @@ class ProcessMovePipeline implements ShouldQueue
         if (! self::checkActor()) {
             throw new Exception('Invalid actor');
         }
-
+        return;
     }
 
     protected function checkTarget()
@@ -101,7 +101,7 @@ class ProcessMovePipeline implements ShouldQueue
         }
 
         if (is_string($res['alsoKnownAs'])) {
-            return self::lowerTrim($res['alsoKnownAs']) === self::lowerTrim($this->actor);
+            return self::lowerTrim($res['alsoKnownAs']) === self::lowerTrim($this->activity);
         }
 
         if (is_array($res['alsoKnownAs'])) {
@@ -109,7 +109,7 @@ class ProcessMovePipeline implements ShouldQueue
                 return trim(strtolower($value));
             });
 
-            $res = in_array($this->actor, $map);
+            $res = in_array($this->activity, $map);
             $debugMessage = $res ? '[AP][INBOX][MOVE] aka target is valid' : '[AP][INBOX][MOVE] aka target is invalid';
 
             Log::info($debugMessage);
@@ -122,7 +122,7 @@ class ProcessMovePipeline implements ShouldQueue
 
     protected function checkActor()
     {
-        $res = ActivityPubFetchService::fetchRequest($this->actor, true);
+        $res = ActivityPubFetchService::fetchRequest($this->activity, true);
 
         if (! $res || ! isset($res['movedTo'])) {
             Log::info('[AP][INBOX][MOVE] actor_movedTo failure');
@@ -130,7 +130,7 @@ class ProcessMovePipeline implements ShouldQueue
             return false;
         }
 
-        $res = Helpers::profileFetch($this->actor);
+        $res = Helpers::profileFetch($this->activity);
         if (! $res) {
             Log::info('[AP][INBOX][MOVE] actor fetch failure');
 

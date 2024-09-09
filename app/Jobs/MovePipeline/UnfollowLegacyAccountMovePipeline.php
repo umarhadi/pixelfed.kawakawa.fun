@@ -62,7 +62,7 @@ class UnfollowLegacyAccountMovePipeline implements ShouldQueue
      */
     public function retryUntil(): DateTime
     {
-        return now()->addMinutes(15);
+        return now()->addMinutes(5);
     }
 
     /**
