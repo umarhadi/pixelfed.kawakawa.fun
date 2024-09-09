@@ -3,6 +3,7 @@
 namespace App\Jobs\MovePipeline;
 
 use App\Services\ActivityPubFetchService;
+use App\Util\ActivityPub\Helpers;
 use DateTime;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;

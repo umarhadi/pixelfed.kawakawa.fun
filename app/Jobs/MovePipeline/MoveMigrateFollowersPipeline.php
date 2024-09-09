@@ -5,14 +5,15 @@ namespace App\Jobs\MovePipeline;
 use App\Follower;
 use App\Util\ActivityPub\Helpers;
 use App\Util\ActivityPub\HttpSignature;
+use DateTime;
 use DB;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Pool;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Middleware\ThrottlesExceptions;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use DateTime;
 
 class MoveMigrateFollowersPipeline implements ShouldQueue
 {

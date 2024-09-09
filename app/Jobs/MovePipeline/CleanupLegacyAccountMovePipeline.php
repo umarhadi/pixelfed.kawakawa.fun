@@ -4,11 +4,12 @@ namespace App\Jobs\MovePipeline;
 
 use App\Follower;
 use App\Util\ActivityPub\Helpers;
+use DateTime;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Middleware\ThrottlesExceptions;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use DateTime;
 
 class CleanupLegacyAccountMovePipeline implements ShouldQueue
 {
