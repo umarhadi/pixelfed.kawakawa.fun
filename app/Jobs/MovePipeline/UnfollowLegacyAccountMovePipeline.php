@@ -85,19 +85,6 @@ class UnfollowLegacyAccountMovePipeline implements ShouldQueue
             throw new Exception('Invalid move accounts');
         }
 
-        $activity = [
-            '@context' => 'https://www.w3.org/ns/activitystreams',
-            'type' => 'Undo',
-            'id' => null,
-            'actor' => null,
-            'object' => [
-                'type' => 'Follow',
-                'id' => null,
-                'object' => $actor,
-                'actor' => null,
-            ],
-        ];
-
         $version = config('pixelfed.version');
         $appUrl = config('app.url');
         $userAgent = "(Pixelfed/{$version}; +{$appUrl})";
@@ -113,13 +100,28 @@ class UnfollowLegacyAccountMovePipeline implements ShouldQueue
             ->where('followers.following_id', $actorAccount['id'])
             ->whereNotNull('profiles.user_id')
             ->whereNull('profiles.deleted_at')
-            ->select('profiles.id', 'profiles.user_id', 'profiles.username', 'profiles.private_key')
-            ->chunkById(100, function ($followers) use ($activity, $addlHeaders, $targetInbox, $targetPid) {
+            ->select('profiles.id', 'profiles.user_id', 'profiles.username', 'profiles.private_key', 'profiles.status')
+            ->chunkById(100, function ($followers) use ($actor, $addlHeaders, $targetInbox, $targetPid) {
                 $client = new Client([
                     'timeout' => config('federation.activitypub.delivery.timeout'),
                 ]);
-                $requests = function ($followers) use ($client, $activity, $addlHeaders, $targetInbox, $targetPid) {
+                $requests = function ($followers) use ($client, $actor, $addlHeaders, $targetInbox, $targetPid) {
+                    $activity = [
+                        '@context' => 'https://www.w3.org/ns/activitystreams',
+                        'type' => 'Undo',
+                        'id' => null,
+                        'actor' => null,
+                        'object' => [
+                            'type' => 'Follow',
+                            'id' => null,
+                            'object' => $actor,
+                            'actor' => null,
+                        ],
+                    ];
                     foreach ($followers as $follower) {
+                        if (! $follower->private_key || ! $follower->username || ! $follower->user_id || $follower->status === 'delete') {
+                            continue;
+                        }
                         $permalink = 'https://'.config('pixelfed.domain.app').'/users/'.$follower->username;
                         $activity['id'] = $permalink.'#follow/'.$targetPid.'/undo';
                         $activity['actor'] = $permalink;
