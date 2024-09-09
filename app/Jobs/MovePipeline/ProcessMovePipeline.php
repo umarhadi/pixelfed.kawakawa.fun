@@ -99,8 +99,8 @@ class ProcessMovePipeline implements ShouldQueue
             return false;
         }
 
-        $res = Helpers::profileFetch($this->target);
-        if (! $res) {
+        $targetRes = Helpers::profileFetch($this->target);
+        if (! $targetRes) {
             Log::info('[AP][INBOX][MOVE] target fetch failure');
 
             return false;
@@ -136,8 +136,8 @@ class ProcessMovePipeline implements ShouldQueue
             return false;
         }
 
-        $res = Helpers::profileFetch($this->activity);
-        if (! $res) {
+        $actorRes = Helpers::profileFetch($this->activity);
+        if (! $actorRes) {
             Log::info('[AP][INBOX][MOVE] actor fetch failure');
 
             return false;
