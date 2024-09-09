@@ -74,16 +74,18 @@ class ProcessMovePipeline implements ShouldQueue
             throw new Exception('Activitypub not enabled');
         }
 
-        if (! self::checkTarget()) {
+        $validTarget = $this->checkTarget();
+        if (! $validTarget) {
             Log::info('pmp: invalid target');
             throw new Exception('Invalid target');
         }
 
-        if (! self::checkActor()) {
+        $validActor = $this->checkActor();
+        if (! $validActor) {
             Log::info('pmp: invalid actor');
             throw new Exception('Invalid actor');
         }
-        return;
+
     }
 
     protected function checkTarget()
@@ -104,7 +106,7 @@ class ProcessMovePipeline implements ShouldQueue
         }
 
         if (is_string($res['alsoKnownAs'])) {
-            return self::lowerTrim($res['alsoKnownAs']) === self::lowerTrim($this->activity);
+            return $this->lowerTrim($res['alsoKnownAs']) === $this->lowerTrim($this->activity);
         }
 
         if (is_array($res['alsoKnownAs'])) {
@@ -127,7 +129,7 @@ class ProcessMovePipeline implements ShouldQueue
     {
         $res = ActivityPubFetchService::fetchRequest($this->activity, true);
 
-        if (! $res || ! isset($res['movedTo'])) {
+        if (! $res || ! isset($res['movedTo']) || empty($res['movedTo'])) {
             Log::info('[AP][INBOX][MOVE] actor_movedTo failure');
 
             return false;
@@ -141,7 +143,18 @@ class ProcessMovePipeline implements ShouldQueue
         }
 
         if (is_string($res['movedTo'])) {
-            return self::lowerTrim($res['movedTo']) === self::lowerTrim($this->target);
+            $match = $this->lowerTrim($res['movedTo']) === $this->lowerTrim($this->target);
+            if (! $match) {
+                $msg = json_encode([
+                    'movedTo' => $res['movedTo'],
+                    'target' => $this->target,
+                ]);
+                Log::info('[AP][INBOX][MOVE] invalid actor match.'.$msg);
+
+                return false;
+            }
+
+            return $match;
         }
 
         return false;
