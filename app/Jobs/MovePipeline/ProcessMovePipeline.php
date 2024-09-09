@@ -8,7 +8,7 @@ use DateTime;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Queue\Middleware\ThrottlesExceptions;
+use Illuminate\Queue\Middleware\ThrottlesExceptionsWithRedis;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Arr;
 use Log;
@@ -26,14 +26,21 @@ class ProcessMovePipeline implements ShouldQueue
      *
      * @var int
      */
-    public $tries = 6;
+    public $tries = 15;
 
     /**
      * The maximum number of unhandled exceptions to allow before failing.
      *
      * @var int
      */
-    public $maxExceptions = 3;
+    public $maxExceptions = 5;
+
+    /**
+     * The number of seconds the job can run before timing out.
+     *
+     * @var int
+     */
+    public $timeout = 120;
 
     /**
      * Create a new job instance.
@@ -53,7 +60,7 @@ class ProcessMovePipeline implements ShouldQueue
     {
         return [
             new WithoutOverlapping('process-move:'.$this->target),
-            (new ThrottlesExceptions(2, 5 * 60))->backoff(5),
+            (new ThrottlesExceptionsWithRedis(5, 2 * 60))->backoff(1),
         ];
     }
 
@@ -62,7 +69,7 @@ class ProcessMovePipeline implements ShouldQueue
      */
     public function retryUntil(): DateTime
     {
-        return now()->addMinutes(5);
+        return now()->addMinutes(10);
     }
 
     /**
@@ -132,6 +139,8 @@ class ProcessMovePipeline implements ShouldQueue
 
         if (! $res || ! isset($res['movedTo']) || empty($res['movedTo'])) {
             Log::info('[AP][INBOX][MOVE] actor_movedTo failure');
+            $payload = json_encode($res, JSON_PRETTY_PRINT);
+            Log::info($payload);
 
             return false;
         }

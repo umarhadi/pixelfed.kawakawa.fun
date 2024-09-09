@@ -12,7 +12,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Pool;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Queue\Middleware\ThrottlesExceptions;
+use Illuminate\Queue\Middleware\ThrottlesExceptionsWithRedis;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 
 class MoveMigrateFollowersPipeline implements ShouldQueue
@@ -28,14 +28,21 @@ class MoveMigrateFollowersPipeline implements ShouldQueue
      *
      * @var int
      */
-    public $tries = 6;
+    public $tries = 15;
 
     /**
      * The maximum number of unhandled exceptions to allow before failing.
      *
      * @var int
      */
-    public $maxExceptions = 3;
+    public $maxExceptions = 5;
+
+    /**
+     * The number of seconds the job can run before timing out.
+     *
+     * @var int
+     */
+    public $timeout = 900;
 
     /**
      * Create a new job instance.
@@ -55,7 +62,7 @@ class MoveMigrateFollowersPipeline implements ShouldQueue
     {
         return [
             new WithoutOverlapping('process-move-migrate-followers:'.$this->target),
-            (new ThrottlesExceptions(2, 5 * 60))->backoff(5),
+            (new ThrottlesExceptionsWithRedis(5, 2 * 60))->backoff(1),
         ];
     }
 
@@ -64,7 +71,7 @@ class MoveMigrateFollowersPipeline implements ShouldQueue
      */
     public function retryUntil(): DateTime
     {
-        return now()->addMinutes(5);
+        return now()->addMinutes(15);
     }
 
     /**
