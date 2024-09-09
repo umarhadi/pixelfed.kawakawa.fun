@@ -98,7 +98,8 @@ class ProcessMovePipeline implements ShouldQueue
 
     protected function checkTarget()
     {
-        $res = ActivityPubFetchService::fetchRequest($this->target, true);
+        $fetchTargetUrl = $this->target.'?cb='.time();
+        $res = ActivityPubFetchService::fetchRequest($fetchTargetUrl, true);
 
         if (! $res || ! isset($res['alsoKnownAs'])) {
             Log::info('[AP][INBOX][MOVE] target_aka failure');
@@ -135,7 +136,8 @@ class ProcessMovePipeline implements ShouldQueue
 
     protected function checkActor()
     {
-        $res = ActivityPubFetchService::fetchRequest($this->activity, true);
+        $fetchActivityUrl = $this->activity.'?cb='.time();
+        $res = ActivityPubFetchService::fetchRequest($fetchActivityUrl, true);
 
         if (! $res || ! isset($res['movedTo']) || empty($res['movedTo'])) {
             Log::info('[AP][INBOX][MOVE] actor_movedTo failure');
