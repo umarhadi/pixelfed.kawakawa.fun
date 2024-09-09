@@ -108,13 +108,22 @@ class MoveMigrateFollowersPipeline implements ShouldQueue
             ->where('followers.following_id', $actorAccount['id'])
             ->whereNotNull('profiles.user_id')
             ->whereNull('profiles.deleted_at')
-            ->select('profiles.id', 'profiles.user_id', 'profiles.username', 'profiles.private_key')
-            ->chunkById(100, function ($followers) use ($activity, $addlHeaders, $targetInbox, $targetPid) {
+            ->select('profiles.id', 'profiles.user_id', 'profiles.username', 'profiles.private_key', 'profiles.status')
+            ->chunkById(100, function ($followers) use ($addlHeaders, $targetInbox, $targetPid, $target) {
                 $client = new Client([
                     'timeout' => config('federation.activitypub.delivery.timeout'),
                 ]);
-                $requests = function ($followers) use ($client, $activity, $addlHeaders, $targetInbox, $targetPid) {
+                $requests = function ($followers) use ($client, $target, $addlHeaders, $targetInbox, $targetPid) {
+                    $activity = [
+                        '@context' => 'https://www.w3.org/ns/activitystreams',
+                        'type' => 'Follow',
+                        'actor' => null,
+                        'object' => $target,
+                    ];
                     foreach ($followers as $follower) {
+                        if (! $follower->private_key || ! $follower->username || ! $follower->user_id || $follower->status === 'delete') {
+                            continue;
+                        }
                         $permalink = 'https://'.config('pixelfed.domain.app').'/users/'.$follower->username;
                         $activity['actor'] = $permalink;
                         $keyId = $permalink.'#main-key';
