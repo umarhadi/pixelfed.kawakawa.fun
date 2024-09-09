@@ -70,14 +70,17 @@ class ProcessMovePipeline implements ShouldQueue
     public function handle(): void
     {
         if (config('app.env') !== 'production' || (bool) config_cache('federation.activitypub.enabled') == false) {
+            Log::info('pmp: AP not enabled');
             throw new Exception('Activitypub not enabled');
         }
 
         if (! self::checkTarget()) {
+            Log::info('pmp: invalid target');
             throw new Exception('Invalid target');
         }
 
         if (! self::checkActor()) {
+            Log::info('pmp: invalid actor');
             throw new Exception('Invalid actor');
         }
         return;
