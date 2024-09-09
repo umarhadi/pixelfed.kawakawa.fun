@@ -9,31 +9,47 @@ use DB;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Pool;
-use GuzzleHttp\Psr7\Request;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\ThrottlesExceptions;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use Illuminate\Support\Facades\Log;
 
 class UnfollowLegacyAccountMovePipeline implements ShouldQueue
 {
     use Queueable;
 
-    public string $target;
+    public $target;
 
-    public string $activity;
+    public $activity;
 
-    public int $tries = 6;
+    /**
+     * The number of times the job may be attempted.
+     *
+     * @var int
+     */
+    public $tries = 6;
 
-    public int $maxExceptions = 3;
+    /**
+     * The maximum number of unhandled exceptions to allow before failing.
+     *
+     * @var int
+     */
+    public $maxExceptions = 3;
 
-    public function __construct(string $target, string $activity)
+    /**
+     * Create a new job instance.
+     */
+    public function __construct($target, $activity)
     {
         $this->target = $target;
         $this->activity = $activity;
     }
 
+    /**
+     * Get the middleware the job should pass through.
+     *
+     * @return array<int, object>
+     */
     public function middleware(): array
     {
         return [
@@ -42,121 +58,32 @@ class UnfollowLegacyAccountMovePipeline implements ShouldQueue
         ];
     }
 
+    /**
+     * Determine the time at which the job should timeout.
+     */
     public function retryUntil(): DateTime
     {
         return now()->addMinutes(5);
     }
 
+    /**
+     * Execute the job.
+     */
     public function handle(): void
     {
-        try {
-            $this->validateEnvironment();
-
-            $targetAccount = $this->fetchProfile($this->target);
-            $actorAccount = $this->fetchProfile($this->activity);
-
-            if (! $targetAccount || ! $actorAccount) {
-                throw new Exception('Invalid move accounts');
-            }
-
-            $client = $this->createHttpClient();
-            $targetInbox = $actorAccount['sharedInbox'] ?? $actorAccount['inbox_url'];
-            $targetPid = $actorAccount['id'];
-
-            $this->processFollowers($client, $targetInbox, $targetPid);
-        } catch (Exception $e) {
-            Log::error('UnfollowLegacyAccountMovePipeline failed', [
-                'target' => $this->target,
-                'activity' => $this->activity,
-                'error' => $e->getMessage(),
-            ]);
-            throw $e;
+        if (config('app.env') !== 'production' || (bool) config_cache('federation.activitypub.enabled') == false) {
+            throw new Exception('Activitypub not enabled');
         }
-    }
 
-    private function validateEnvironment(): void
-    {
-        if (config('app.env') !== 'production' || ! (bool) config('federation.activitypub.enabled')) {
-            throw new Exception('ActivityPub not enabled');
+        $target = $this->target;
+        $actor = $this->activity;
+
+        $targetAccount = Helpers::profileFetch($target);
+        $actorAccount = Helpers::profileFetch($actor);
+
+        if (! $targetAccount || ! $actorAccount) {
+            throw new Exception('Invalid move accounts');
         }
-    }
-
-    private function fetchProfile(string $url): ?array
-    {
-        return Helpers::profileFetch($url);
-    }
-
-    private function createHttpClient(): Client
-    {
-        return new Client([
-            'timeout' => config('federation.activitypub.delivery.timeout'),
-        ]);
-    }
-
-    private function processFollowers(Client $client, string $targetInbox, int $targetPid): void
-    {
-        DB::table('followers')
-            ->join('profiles', 'followers.profile_id', '=', 'profiles.id')
-            ->where('followers.following_id', $targetPid)
-            ->whereNotNull('profiles.user_id')
-            ->whereNull('profiles.deleted_at')
-            ->select('profiles.id', 'profiles.user_id', 'profiles.username', 'profiles.private_key', 'profiles.status')
-            ->chunkById(100, function ($followers) use ($client, $targetInbox, $targetPid) {
-                $this->processFollowerChunk($followers, $client, $targetInbox, $targetPid);
-            }, 'id');
-    }
-
-    private function processFollowerChunk($followers, Client $client, string $targetInbox, int $targetPid): void
-    {
-        $requests = $this->generateRequests($followers, $targetInbox, $targetPid);
-
-        $pool = new Pool($client, $requests, [
-            'concurrency' => config('federation.activitypub.delivery.concurrency'),
-            'fulfilled' => function ($response, $index) {
-                // Log success if needed
-            },
-            'rejected' => function ($reason, $index) {
-                Log::error('Failed to process unfollow', ['reason' => $reason, 'index' => $index]);
-            },
-        ]);
-
-        $pool->promise()->wait();
-    }
-
-    private function generateRequests($followers, string $targetInbox, int $targetPid): \Generator
-    {
-        foreach ($followers as $follower) {
-            if (! $this->isValidFollower($follower)) {
-                continue;
-            }
-
-            yield $this->createUnfollowRequest($follower, $targetInbox, $targetPid);
-        }
-    }
-
-    private function isValidFollower($follower): bool
-    {
-        return $follower->private_key && $follower->username && $follower->user_id && $follower->status !== 'delete';
-    }
-
-    private function createUnfollowRequest($follower, string $targetInbox, int $targetPid): Request
-    {
-        $permalink = 'https://'.config('pixelfed.domain.app').'/users/'.$follower->username;
-        $activity = [
-            '@context' => 'https://www.w3.org/ns/activitystreams',
-            'type' => 'Undo',
-            'id' => $permalink.'#follow/'.$targetPid.'/undo',
-            'actor' => $permalink,
-            'object' => [
-                'type' => 'Follow',
-                'id' => $permalink.'#follows/'.$targetPid,
-                'object' => $this->activity,
-                'actor' => $permalink,
-            ],
-        ];
-
-        $keyId = $permalink.'#main-key';
-        $payload = json_encode($activity);
 
         $version = config('pixelfed.version');
         $appUrl = config('app.url');
@@ -165,9 +92,66 @@ class UnfollowLegacyAccountMovePipeline implements ShouldQueue
             'Content-Type' => 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
             'User-Agent' => $userAgent,
         ];
+        $targetInbox = $actorAccount['sharedInbox'] ?? $actorAccount['inbox_url'];
+        $targetPid = $actorAccount['id'];
 
-        $headers = HttpSignature::signRaw($follower->private_key, $keyId, $targetInbox, $activity, $addlHeaders);
+        DB::table('followers')
+            ->join('profiles', 'followers.profile_id', '=', 'profiles.id')
+            ->where('followers.following_id', $actorAccount['id'])
+            ->whereNotNull('profiles.user_id')
+            ->whereNull('profiles.deleted_at')
+            ->select('profiles.id', 'profiles.user_id', 'profiles.username', 'profiles.private_key', 'profiles.status')
+            ->chunkById(100, function ($followers) use ($actor, $addlHeaders, $targetInbox, $targetPid) {
+                $client = new Client([
+                    'timeout' => config('federation.activitypub.delivery.timeout'),
+                ]);
+                $requests = function ($followers) use ($client, $actor, $addlHeaders, $targetInbox, $targetPid) {
+                    $activity = [
+                        '@context' => 'https://www.w3.org/ns/activitystreams',
+                        'type' => 'Undo',
+                        'id' => null,
+                        'actor' => null,
+                        'object' => [
+                            'type' => 'Follow',
+                            'id' => null,
+                            'object' => $actor,
+                            'actor' => null,
+                        ],
+                    ];
+                    foreach ($followers as $follower) {
+                        if (! $follower->private_key || ! $follower->username || ! $follower->user_id || $follower->status === 'delete') {
+                            continue;
+                        }
+                        $permalink = 'https://'.config('pixelfed.domain.app').'/users/'.$follower->username;
+                        $activity['id'] = $permalink.'#follow/'.$targetPid.'/undo';
+                        $activity['actor'] = $permalink;
+                        $activity['object']['id'] = $permalink.'#follows/'.$targetPid;
+                        $activity['object']['actor'] = $permalink;
+                        $keyId = $permalink.'#main-key';
+                        $payload = json_encode($activity);
+                        $url = $targetInbox;
+                        $headers = HttpSignature::signRaw($follower->private_key, $keyId, $targetInbox, $activity, $addlHeaders);
+                        yield function () use ($client, $url, $headers, $payload) {
+                            return $client->postAsync($url, [
+                                'curl' => [
+                                    CURLOPT_HTTPHEADER => $headers,
+                                    CURLOPT_POSTFIELDS => $payload,
+                                    CURLOPT_HEADER => true,
+                                ],
+                            ]);
+                        };
+                    }
+                };
 
-        return new Request('POST', $targetInbox, $headers, $payload);
+                $pool = new Pool($client, $requests($followers), [
+                    'concurrency' => config('federation.activitypub.delivery.concurrency'),
+                    'fulfilled' => function ($response, $index) {},
+                    'rejected' => function ($reason, $index) {},
+                ]);
+
+                $promise = $pool->promise();
+
+                $promise->wait();
+            }, 'id');
     }
 }
