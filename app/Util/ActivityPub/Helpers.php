@@ -801,10 +801,17 @@ class Helpers
         return self::profileUpdateOrCreate($url);
     }
 
-    public static function profileUpdateOrCreate($url)
+    public static function profileUpdateOrCreate($url, $movedToCheck = false)
     {
+        $movedToPid = null;
         $res = self::fetchProfileFromUrl($url);
         if (! $res || isset($res['id']) == false) {
+            return;
+        }
+        if (! self::validateUrl($res['inbox'])) {
+            return;
+        }
+        if (! self::validateUrl($res['id'])) {
             return;
         }
         $urlDomain = parse_url($url, PHP_URL_HOST);
@@ -829,18 +836,18 @@ class Helpers
         $remoteUsername = $username;
         $webfinger = "@{$username}@{$domain}";
 
-        if (! self::validateUrl($res['inbox'])) {
-            return;
-        }
-        if (! self::validateUrl($res['id'])) {
-            return;
-        }
-
         $instance = Instance::updateOrCreate([
             'domain' => $domain,
         ]);
         if ($instance->wasRecentlyCreated == true) {
             \App\Jobs\InstancePipeline\FetchNodeinfoPipeline::dispatch($instance)->onQueue('low');
+        }
+
+        if (! $movedToCheck && isset($res['movedTo']) && Helpers::validateUrl($res['movedTo'])) {
+            $movedTo = self::profileUpdateOrCreate($res['movedTo'], true);
+            if ($movedTo) {
+                $movedToPid = $movedTo->id;
+            }
         }
 
         $profile = Profile::updateOrCreate(
@@ -859,6 +866,7 @@ class Helpers
                 'outbox_url' => isset($res['outbox']) ? $res['outbox'] : null,
                 'public_key' => $res['publicKey']['publicKeyPem'],
                 'indexable' => isset($res['indexable']) && is_bool($res['indexable']) ? $res['indexable'] : false,
+                'moved_to_profile_id' => $movedToPid,
             ]
         );
 
