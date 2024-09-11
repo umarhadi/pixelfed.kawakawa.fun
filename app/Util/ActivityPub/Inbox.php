@@ -1382,7 +1382,7 @@ class Inbox
                 Log::error($e);
             })
             ->onQueue('move')
-            ->delay(now()->addMinutes(random_int(2, 5)))
+            ->delay(now()->addMinutes(random_int(1, 3)))
             ->dispatch();
     }
 }
