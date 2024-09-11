@@ -3,6 +3,8 @@
 namespace App\Jobs\MovePipeline;
 
 use App\Follower;
+use App\Profile;
+use App\Services\AccountService;
 use App\Util\ActivityPub\Helpers;
 use DateTime;
 use Exception;
@@ -83,5 +85,14 @@ class CleanupLegacyAccountMovePipeline implements ShouldQueue
         }
 
         Follower::whereFollowingId($actorAccount['id'])->delete();
+
+        $oldProfile = Profile::find($actorAccount['id']);
+
+        if ($oldProfile) {
+            $oldProfile->moved_to_profile_id = $targetAccount['id'];
+            $oldProfile->save();
+            AccountService::del($oldProfile->id);
+            AccountService::del($targetAccount['id']);
+        }
     }
 }
