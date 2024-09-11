@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\MovePipeline;
 
 use App\Util\ActivityPub\HttpSignature;
 use GuzzleHttp\Client;
