@@ -1369,8 +1369,6 @@ class Inbox
             ! Helpers::validateUrl($activity) ||
             ! Helpers::validateUrl($target)
         ) {
-            Log::info('[AP][INBOX][MOVE] validateUrl fail');
-
             return;
         }
 

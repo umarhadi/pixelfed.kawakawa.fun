@@ -11,7 +11,6 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\ThrottlesExceptionsWithRedis;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Arr;
-use Log;
 
 class ProcessMovePipeline implements ShouldQueue
 {
@@ -78,19 +77,16 @@ class ProcessMovePipeline implements ShouldQueue
     public function handle(): void
     {
         if (config('app.env') !== 'production' || (bool) config_cache('federation.activitypub.enabled') == false) {
-            Log::info('pmp: AP not enabled');
             throw new Exception('Activitypub not enabled');
         }
 
         $validTarget = $this->checkTarget();
         if (! $validTarget) {
-            Log::info('pmp: invalid target');
             throw new Exception('Invalid target');
         }
 
         $validActor = $this->checkActor();
         if (! $validActor) {
-            Log::info('pmp: invalid actor');
             throw new Exception('Invalid actor');
         }
 
@@ -102,15 +98,11 @@ class ProcessMovePipeline implements ShouldQueue
         $res = ActivityPubFetchService::fetchRequest($fetchTargetUrl, true);
 
         if (! $res || ! isset($res['alsoKnownAs'])) {
-            Log::info('[AP][INBOX][MOVE] target_aka failure');
-
             return false;
         }
 
         $targetRes = Helpers::profileFetch($this->target);
         if (! $targetRes) {
-            Log::info('[AP][INBOX][MOVE] target fetch failure');
-
             return false;
         }
 
@@ -124,9 +116,6 @@ class ProcessMovePipeline implements ShouldQueue
             });
 
             $res = in_array($this->activity, $map);
-            $debugMessage = $res ? '[AP][INBOX][MOVE] aka target is valid' : '[AP][INBOX][MOVE] aka target is invalid';
-
-            Log::info($debugMessage);
 
             return $res;
         }
@@ -140,29 +129,17 @@ class ProcessMovePipeline implements ShouldQueue
         $res = ActivityPubFetchService::fetchRequest($fetchActivityUrl, true);
 
         if (! $res || ! isset($res['movedTo']) || empty($res['movedTo'])) {
-            Log::info('[AP][INBOX][MOVE] actor_movedTo failure');
-            $payload = json_encode($res, JSON_PRETTY_PRINT);
-            Log::info($payload);
-
             return false;
         }
 
         $actorRes = Helpers::profileFetch($this->activity);
         if (! $actorRes) {
-            Log::info('[AP][INBOX][MOVE] actor fetch failure');
-
             return false;
         }
 
         if (is_string($res['movedTo'])) {
             $match = $this->lowerTrim($res['movedTo']) === $this->lowerTrim($this->target);
             if (! $match) {
-                $msg = json_encode([
-                    'movedTo' => $res['movedTo'],
-                    'target' => $this->target,
-                ]);
-                Log::info('[AP][INBOX][MOVE] invalid actor match.'.$msg);
-
                 return false;
             }
 
