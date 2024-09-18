@@ -26,6 +26,7 @@ use App\Services\FollowerService;
 use App\Services\MediaBlocklistService;
 use App\Services\MediaPathService;
 use App\Services\NetworkTimelineService;
+use App\Services\NotificationAppGatewayService;
 use App\Services\ProfileStatusService;
 use App\Services\PublicTimelineService;
 use App\Services\StatusService;
@@ -54,8 +55,8 @@ class ApiV1Dot1Controller extends Controller
 
     public function __construct()
     {
-        $this->fractal = new Fractal\Manager();
-        $this->fractal->setSerializer(new ArraySerializer());
+        $this->fractal = new Fractal\Manager;
+        $this->fractal->setSerializer(new ArraySerializer);
     }
 
     public function json($res, $code = 200, $headers = [])
@@ -317,7 +318,7 @@ class ApiV1Dot1Controller extends Controller
         if (config('pixelfed.bouncer.cloud_ips.ban_signups')) {
             abort_if(BouncerService::checkIp($request->ip()), 404);
         }
-        $agent = new Agent();
+        $agent = new Agent;
         $currentIp = $request->ip();
 
         $activity = AccountLog::whereUserId($user->id)
@@ -575,7 +576,7 @@ class ApiV1Dot1Controller extends Controller
 
         $rtoken = Str::random(64);
 
-        $verify = new EmailVerification();
+        $verify = new EmailVerification;
         $verify->user_id = $user->id;
         $verify->email = $user->email;
         $verify->user_token = $user->app_register_token;
@@ -1203,7 +1204,7 @@ class ApiV1Dot1Controller extends Controller
             abort(500, 'An error occured.');
         }
 
-        $media = new Media();
+        $media = new Media;
         $media->status_id = $status->id;
         $media->profile_id = $profile->id;
         $media->user_id = $user->id;
@@ -1251,5 +1252,12 @@ class ApiV1Dot1Controller extends Controller
         $res['card'] = null;
 
         return $this->json($res);
+    }
+
+    public function nagState(Request $request)
+    {
+        abort_unless((bool) config_cache('pixelfed.oauth_enabled'), 404);
+
+        return NotificationAppGatewayService::config();
     }
 }
