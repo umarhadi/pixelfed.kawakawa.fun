@@ -1258,6 +1258,8 @@ class ApiV1Dot1Controller extends Controller
     {
         abort_unless((bool) config_cache('pixelfed.oauth_enabled'), 404);
 
-        return NotificationAppGatewayService::config();
+        return [
+            'active' => NotificationAppGatewayService::enabled(),
+        ];
     }
 }
