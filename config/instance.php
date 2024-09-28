@@ -154,6 +154,7 @@ return [
 
         'nag' => [
             'enabled' => (bool) env('INSTANCE_NOTIFY_APP_GATEWAY', true),
+            'api_key' => env('PIXELFED_PUSHGATEWAY_KEY', false),
             'endpoint' => 'push.pixelfed.net',
         ],
     ],
