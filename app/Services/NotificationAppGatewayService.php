@@ -67,14 +67,16 @@ class NotificationAppGatewayService
         if (! $token || empty($token)) {
             return false;
         }
-        $starts = str_starts_with($token, 'Expo');
-        if (! $starts) {
+
+        if (str_starts_with($token, 'ExponentPushToken[') && mb_strlen($token) < 26) {
             return false;
         }
-        if (! str_contains($token, 'PushToken[') || ! str_contains($token, ']')) {
+
+        if (! str_starts_with($token, 'ExponentPushToken[') && ! str_starts_with($token, 'ExpoPushToken[')) {
             return false;
         }
-        if (substr($token, -1) !== ']') {
+
+        if (! str_ends_with($token, ']')) {
             return false;
         }
 
@@ -91,7 +93,7 @@ class NotificationAppGatewayService
             return false;
         }
 
-        $types = ['new_follower', 'like', 'comment', 'share'];
+        $types = PushNotificationService::NOTIFY_TYPES;
 
         if (! $type || empty($type) || ! in_array($type, $types)) {
             return false;
