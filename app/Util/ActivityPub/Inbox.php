@@ -15,6 +15,7 @@ use App\Jobs\MovePipeline\MoveMigrateFollowersPipeline;
 use App\Jobs\MovePipeline\ProcessMovePipeline;
 use App\Jobs\MovePipeline\UnfollowLegacyAccountMovePipeline;
 use App\Jobs\ProfilePipeline\HandleUpdateActivity;
+use App\Jobs\PushNotificationPipeline\MentionPushNotifyPipeline;
 use App\Jobs\StatusPipeline\RemoteStatusDelete;
 use App\Jobs\StatusPipeline\StatusRemoteUpdatePipeline;
 use App\Jobs\StoryPipeline\StoryExpire;
@@ -27,7 +28,9 @@ use App\Notification;
 use App\Profile;
 use App\Services\AccountService;
 use App\Services\FollowerService;
+use App\Services\NotificationAppGatewayService;
 use App\Services\PollService;
+use App\Services\PushNotificationService;
 use App\Services\ReblogService;
 use App\Services\UserFilterService;
 use App\Status;
@@ -242,7 +245,7 @@ class Inbox
         $cc = isset($activity['cc']) ? $activity['cc'] : [];
 
         if ($activity['type'] == 'Question') {
-            $this->handlePollCreate();
+            //$this->handlePollCreate();
 
             return;
         }
@@ -531,6 +534,15 @@ class Inbox
             $notification->item_id = $dm->id;
             $notification->item_type = "App\DirectMessage";
             $notification->save();
+
+            if (NotificationAppGatewayService::enabled()) {
+                if (PushNotificationService::check('mention', $profile->id)) {
+                    $user = User::whereProfileId($profile->id)->first();
+                    if ($user && $user->expo_token && $user->notify_enabled) {
+                        MentionPushNotifyPipeline::dispatch($user->expo_token, $actor->username)->onQueue('pushnotify');
+                    }
+                }
+            }
         }
 
     }
