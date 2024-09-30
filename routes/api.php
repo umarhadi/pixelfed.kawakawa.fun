@@ -268,10 +268,11 @@ Route::group(['prefix' => 'api'], function () use ($middleware) {
             Route::post('invite/admin/ec', 'AdminInviteController@apiEmailCheck')->middleware('throttle:10,1440');
         });
 
-        Route::group(['prefix' => 'expo'], function () use ($middleware) {
-            Route::get('push-notifications', 'Api\ApiV1Dot1Controller@getExpoPushNotifications')->middleware($middleware);
-            Route::post('push-notifications/update', 'Api\ApiV1Dot1Controller@updateExpoPushNotifications')->middleware($middleware);
-            Route::post('push-notifications/disable', 'Api\ApiV1Dot1Controller@disableExpoPushNotifications')->middleware($middleware);
+        Route::group(['prefix' => 'push'], function () use ($middleware) {
+            Route::get('state', 'Api\ApiV1Dot1Controller@getPushState')->middleware($middleware);
+            Route::post('compare', 'Api\ApiV1Dot1Controller@comparePush')->middleware($middleware);
+            Route::post('update', 'Api\ApiV1Dot1Controller@updatePush')->middleware($middleware);
+            Route::post('disable', 'Api\ApiV1Dot1Controller@disablePush')->middleware($middleware);
         });
 
         Route::post('status/create', 'Api\ApiV1Dot1Controller@statusCreate')->middleware($middleware);
