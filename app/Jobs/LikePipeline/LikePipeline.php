@@ -11,13 +11,11 @@ use App\Services\StatusService;
 use App\Transformer\ActivityPub\Verb\Like as LikeTransformer;
 use App\User;
 use App\Util\ActivityPub\Helpers;
-use DB;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Lottery;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
 
@@ -64,17 +62,6 @@ class LikePipeline implements ShouldQueue
             // Ignore notifications to deleted statuses
             return;
         }
-
-        Lottery::odds(1, 20)
-            ->winner(function () use ($status) {
-                $status->likes_count = DB::table('likes')->whereStatusId($status->id)->count();
-                $status->save();
-            })
-            ->loser(function () use ($status) {
-                $status->likes_count = $status->likes_count + 1;
-                $status->save();
-            })
-            ->choose();
 
         StatusService::refresh($status->id);
 
