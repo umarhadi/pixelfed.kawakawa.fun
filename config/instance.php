@@ -151,6 +151,12 @@ return [
             'enabled' => env('INSTANCE_NOTIFY_AUTO_GC', false),
             'delete_after_days' => env('INSTANCE_NOTIFY_AUTO_GC_DEL_AFTER_DAYS', 365),
         ],
+
+        'nag' => [
+            'enabled' => (bool) env('INSTANCE_NOTIFY_APP_GATEWAY', true),
+            'api_key' => env('PIXELFED_PUSHGATEWAY_KEY', false),
+            'endpoint' => 'push.pixelfed.net',
+        ],
     ],
 
     'curated_registration' => [
@@ -171,6 +177,7 @@ return [
                     'enabled' => env('INSTANCE_CUR_REG_NOTIFY_ADMIN_ON_VERIFY', false),
                     'bundle' => env('INSTANCE_CUR_REG_NOTIFY_ADMIN_ON_VERIFY_BUNDLE', false),
                     'max_per_day' => env('INSTANCE_CUR_REG_NOTIFY_ADMIN_ON_VERIFY_MPD', 10),
+                    'cc_addresses' => env('INSTANCE_CUR_REG_NOTIFY_ADMIN_ON_VERIFY_CC'),
                 ],
                 'on_user_response' => env('INSTANCE_CUR_REG_NOTIFY_ADMIN_ON_USER_RESPONSE', false),
             ],
