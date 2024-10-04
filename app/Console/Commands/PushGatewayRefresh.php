@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\NotificationAppGatewayService;
+use App\Services\PushNotificationService;
 use Illuminate\Console\Command;
 
 use function Laravel\Prompts\select;
@@ -50,6 +51,7 @@ class PushGatewayRefresh extends Command
                 $recheck = NotificationAppGatewayService::forceSupportRecheck();
                 if ($recheck) {
                     $this->info('Success! Push Notifications are now active!');
+                    PushNotificationService::warmList('like');
 
                     return;
                 } else {
