@@ -19,6 +19,7 @@ use App\Media;
 use App\Place;
 use App\Profile;
 use App\Report;
+use App\Rules\ExpoPushTokenRule;
 use App\Services\AccountService;
 use App\Services\BouncerService;
 use App\Services\EmailService;
@@ -48,7 +49,6 @@ use Jenssegers\Agent\Agent;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
 use Mail;
-use NotificationChannels\Expo\ExpoPushToken;
 
 class ApiV1Dot1Controller extends Controller
 {
@@ -1087,7 +1087,7 @@ class ApiV1Dot1Controller extends Controller
         abort_if($request->user()->status, 422, 'Cannot access this resource at this time');
 
         $this->validate($request, [
-            'expo_token' => ['required', ExpoPushToken::rule()],
+            'expo_token' => ['required', 'string', new ExpoPushTokenRule],
         ]);
 
         $user = $request->user();
@@ -1127,7 +1127,7 @@ class ApiV1Dot1Controller extends Controller
 
         $this->validate($request, [
             'notify_enabled' => 'required',
-            'token' => ['required', ExpoPushToken::rule()],
+            'token' => ['required', 'string', new ExpoPushTokenRule],
             'notify_like' => 'sometimes',
             'notify_follow' => 'sometimes',
             'notify_mention' => 'sometimes',
