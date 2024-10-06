@@ -18,6 +18,7 @@ return [
         'tags' => [
             'is_public' => env('INSTANCE_PUBLIC_HASHTAGS', false),
         ],
+        'beagle_api' => env('PF_INSTANCE_USE_BEAGLE_API', true),
     ],
 
     'email' => env('INSTANCE_CONTACT_EMAIL'),
