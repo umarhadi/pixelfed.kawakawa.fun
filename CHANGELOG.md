@@ -28,6 +28,10 @@
 - Update UserAccountDelete command, increase sharedInbox ttl from 12h to 14d ([be02f48a](https://github.com/pixelfed/pixelfed/commit/be02f48a))
 - Update HttpSignature, add signRaw method and improve error checking ([d4cf9181](https://github.com/pixelfed/pixelfed/commit/d4cf9181))
 - Update AP helpers, add forceBanCheck param to validateUrl method ([42424028](https://github.com/pixelfed/pixelfed/commit/42424028))
+- Update layout, add og:logo ([4cc576e1](https://github.com/pixelfed/pixelfed/commit/4cc576e1))
+- Update ReblogService, fix cache sync issues ([3de8ceca](https://github.com/pixelfed/pixelfed/commit/3de8ceca))
+- Update config, allow Beagle discover service to be disabled ([de4ce3c8](https://github.com/pixelfed/pixelfed/commit/de4ce3c8))
+-  ([](https://github.com/pixelfed/pixelfed/commit/))
 -  ([](https://github.com/pixelfed/pixelfed/commit/))
 
 ## [v0.12.3 (2024-07-01)](https://github.com/pixelfed/pixelfed/compare/v0.12.2...v0.12.3)
