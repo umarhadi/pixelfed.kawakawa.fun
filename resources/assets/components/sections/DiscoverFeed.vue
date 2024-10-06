@@ -1,8 +1,6 @@
 <template>
     <div class="discover-feed-component">
         <section class="mt-3 mb-5 section-explore">
-            <b-breadcrumb class="font-default" :items="breadcrumbItems"></b-breadcrumb>
-
             <div class="profile-timeline">
                 <div class="row p-0 mt-5">
                     <div class="col-12 mb-4 d-flex justify-content-between align-items-center">
