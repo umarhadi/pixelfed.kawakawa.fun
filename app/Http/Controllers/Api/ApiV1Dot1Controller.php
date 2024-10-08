@@ -1139,7 +1139,7 @@ class ApiV1Dot1Controller extends Controller
         $expoToken = $request->input('token');
 
         $existing = User::where('profile_id', '!=', $pid)->whereExpoToken($expoToken)->count();
-        abort_if($existing, 400, 'Push token is already used by another account');
+        abort_if($existing && $existing > 5, 400, 'Push token is already used by another account');
 
         $request->user()->update([
             'notify_enabled' => $request->boolean('notify_enabled'),
