@@ -14,7 +14,7 @@
                 <div class="list-group list-group-flush">
                     <div class="list-group-item">
                         <div class="media">
-                            <img src="{{$contact->user->profile->avatarUrl()}}" class="mr-3 rounded-circle" width="40px" height="40px">
+                            <img src="{{$contact->user->profile->avatarUrl()}}" class="mr-3 rounded-circle" width="40px" height="40px" onerror="this.onerror=null;this.src='/storage/avatars/default.png?v=2'">
                             <div class="media-body">
                                 <h5 class="my-0">&commat;{{$contact->user->username}}</h5>
                                 <span class="text-muted">{{$contact->user->name}}</span>
