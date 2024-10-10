@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\AdminReportController;
 use App\Http\Controllers\Admin\AdminSettingsController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Instance;
+use App\Mail\AdminMessageResponse;
 use App\Models\CustomEmoji;
 use App\Newsroom;
 use App\OauthClient;
@@ -29,6 +30,7 @@ use Cache;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Mail;
 use Storage;
 
 class AdminController extends Controller
@@ -221,16 +223,60 @@ class AdminController extends Controller
 
     public function messagesHome(Request $request)
     {
-        $messages = Contact::orderByDesc('id')->paginate(10);
+        $this->validate($request, [
+            'sort' => 'sometimes|string|in:all,open,closed',
+        ]);
+        $sort = $request->input('sort', 'open');
 
-        return view('admin.messages.home', compact('messages'));
+        $messages = Contact::when($sort, function ($query, $sort) {
+            if ($sort === 'open') {
+                $query->whereNull('read_at');
+            }
+            if ($sort === 'closed') {
+                $query->whereNotNull('read_at');
+            }
+        })
+            ->orderByDesc('id')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('admin.messages.home', compact('messages', 'sort'));
     }
 
     public function messagesShow(Request $request, $id)
     {
         $message = Contact::findOrFail($id);
+        $user = User::whereNull('status')->findOrFail($message->user_id);
 
         return view('admin.messages.show', compact('message'));
+    }
+
+    public function messagesReply(Request $request, $id)
+    {
+        $this->validate($request, [
+            'message' => 'required|string|min:1|max:500',
+        ]);
+
+        $message = Contact::whereNull('responded_at')->findOrFail($id);
+        $message->response = $request->input('message');
+        $message->read_at = now();
+        $message->responded_at = now();
+        $message->save();
+
+        Mail::to($message->user->email)->send(new AdminMessageResponse($message));
+
+        return redirect('/i/admin/messages/home')->with('status', 'Sent response to '.$message->user->username);
+    }
+
+    public function messagesReplyPreview(Request $request, $id)
+    {
+        $this->validate($request, [
+            'message' => 'required|string|min:1|max:500',
+        ]);
+
+        $message = Contact::whereNull('read_at')->findOrFail($id);
+
+        return new AdminMessageResponse($message);
     }
 
     public function messagesMarkRead(Request $request)
@@ -245,7 +291,9 @@ class AdminController extends Controller
         }
         $message->read_at = now();
         $message->save();
+        $request->session()->flash('status', 'Marked response from '.$message->user->username.' as read!');
 
+        return ['status' => 200];
     }
 
     public function newsroomHome(Request $request)
@@ -355,7 +403,7 @@ class AdminController extends Controller
         if (Newsroom::whereSlug($slug)->exists()) {
             $slug = $slug.'-'.str_random(4);
         }
-        $news = new Newsroom();
+        $news = new Newsroom;
         $fields = [
             'title' => 'string',
             'summary' => 'string',
