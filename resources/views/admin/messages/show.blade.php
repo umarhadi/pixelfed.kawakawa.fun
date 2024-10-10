@@ -110,6 +110,11 @@
                         @if($message->responded_at)
                         <p class="mb-0">{{$message->response}}</p>
                         @else
+                        @if(config('mail.default') === 'log')
+                        <div class="alert alert-danger">
+                        <p class="mb-0">You need to configure your mail driver before you can send outgoing emails.</p>
+                        </div>
+                        @else
                         <form method="post" id="mform">
     						@csrf
     						<div class="form-group">
@@ -142,6 +147,7 @@
                                 </div>
     						</div>
     					</form>
+                        @endif
                         @endif
     				</div>
                 </div>

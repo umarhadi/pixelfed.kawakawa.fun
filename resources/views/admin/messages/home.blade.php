@@ -23,6 +23,13 @@
             </div>
         </div>
         @endif
+        @if (session('error'))
+        <div class="col-12" id="flash">
+            <div class="alert alert-danger">
+                {{ session('error') }}
+            </div>
+        </div>
+        @endif
         <div class="col-12">
             <ul class="nav nav-pills my-3">
                 <li class="nav-item">
