@@ -77,6 +77,8 @@ Route::domain(config('pixelfed.domain.admin'))->prefix('i/admin')->group(functio
     Route::get('messages/home', 'AdminController@messagesHome')->name('admin.messages');
     Route::get('messages/show/{id}', 'AdminController@messagesShow');
     Route::post('messages/mark-read', 'AdminController@messagesMarkRead');
+    Route::post('messages/show/{id}', 'AdminController@messagesReply');
+    Route::post('messages/preview/{id}', 'AdminController@messagesReplyPreview');
     Route::redirect('site-news', '/i/admin/newsroom');
     Route::get('newsroom', 'AdminController@newsroomHome')->name('admin.newsroom.home');
     Route::get('newsroom/create', 'AdminController@newsroomCreate')->name('admin.newsroom.create');
