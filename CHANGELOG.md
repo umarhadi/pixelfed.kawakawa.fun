@@ -6,6 +6,7 @@
 - Implement Admin Domain Blocks API (Mastodon API Compatible) [ThisIsMissEm](https://github.com/ThisIsMissEm) ([#5021](https://github.com/pixelfed/pixelfed/pull/5021))
 - Authorize Interaction support (for handling remote interactions) ([4ca7c6c3](https://github.com/pixelfed/pixelfed/commit/4ca7c6c3))
 - Contact Form Admin Responses ([52cc6090](https://github.com/pixelfed/pixelfed/commit/52cc6090))
+- Profile Carousels ([8af77a3f](https://github.com/pixelfed/pixelfed/commit/8af77a3f))
 
 ### Federation
 - Add ActiveSharedInboxService, for efficient sharedInbox caching ([1a6a3397](https://github.com/pixelfed/pixelfed/commit/1a6a3397))

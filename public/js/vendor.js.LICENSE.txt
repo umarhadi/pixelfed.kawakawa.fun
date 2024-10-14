@@ -41,6 +41,12 @@
  */
 
 /*!
+ * Glide.js v3.6.2
+ * (c) 2013-2024 Jędrzej Chałubek (https://github.com/jedrzejchalubek/)
+ * Released under the MIT License.
+ */
+
+/*!
  * JavaScript Cookie v2.2.1
  * https://github.com/js-cookie/js-cookie
  *
