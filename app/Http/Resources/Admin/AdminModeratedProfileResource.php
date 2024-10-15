@@ -2,9 +2,9 @@
 
 namespace App\Http\Resources\Admin;
 
+use App\Profile;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use App\Profile;
 
 class AdminModeratedProfileResource extends JsonResource
 {
@@ -17,11 +17,12 @@ class AdminModeratedProfileResource extends JsonResource
     {
         $profileObj = [];
         $profile = Profile::withTrashed()->find($this->profile_id);
-        if($profile) {
+        if ($profile) {
             $profileObj = [
                 'username' => $profile->username,
             ];
         }
+
         return [
             'id' => $this->id,
             'domain' => $this->domain,
