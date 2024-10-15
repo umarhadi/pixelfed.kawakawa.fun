@@ -3,18 +3,19 @@
 namespace App\Http\Controllers\Admin;
 
 use App\AccountInterstitial;
-use App\Http\Resources\AdminReport;
 use App\Http\Resources\AdminRemoteReport;
+use App\Http\Resources\AdminReport;
 use App\Http\Resources\AdminSpamReport;
 use App\Jobs\DeletePipeline\DeleteAccountPipeline;
 use App\Jobs\DeletePipeline\DeleteRemoteProfilePipeline;
 use App\Jobs\StatusPipeline\RemoteStatusDelete;
 use App\Jobs\StatusPipeline\StatusDelete;
 use App\Jobs\StoryPipeline\StoryDelete;
+use App\Models\ModeratedProfile;
+use App\Models\RemoteReport;
 use App\Notification;
 use App\Profile;
 use App\Report;
-use App\Models\RemoteReport;
 use App\Services\AccountService;
 use App\Services\ModLogService;
 use App\Services\NetworkTimelineService;
@@ -25,11 +26,11 @@ use App\Status;
 use App\Story;
 use App\User;
 use Cache;
-use Storage;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
+use Storage;
 
 trait AdminReportController
 {
@@ -201,10 +202,7 @@ trait AdminReportController
                     return 0;
                 }
 
-                public function render()
-                {
-
-                }
+                public function render() {}
             };
         }
 
@@ -829,6 +827,16 @@ trait AdminReportController
                 $profile->cw = true;
                 $profile->save();
 
+                if ($profile->remote_url) {
+                    ModeratedProfile::updateOrCreate([
+                        'profile_url' => $profile->remote_url,
+                        'profile_id' => $profile->id,
+                    ], [
+                        'is_nsfw' => true,
+                        'domain' => $profile->domain,
+                    ]);
+                }
+
                 foreach (Status::whereProfileId($profile->id)->cursor() as $status) {
                     $status->is_nsfw = true;
                     $status->save();
@@ -879,6 +887,16 @@ trait AdminReportController
                 $profile->unlisted = true;
                 $profile->save();
 
+                if ($profile->remote_url) {
+                    ModeratedProfile::updateOrCreate([
+                        'profile_url' => $profile->remote_url,
+                        'profile_id' => $profile->id,
+                    ], [
+                        'is_unlisted' => true,
+                        'domain' => $profile->domain,
+                    ]);
+                }
+
                 foreach (Status::whereProfileId($profile->id)->whereScope('public')->cursor() as $status) {
                     $status->scope = 'unlisted';
                     $status->visibility = 'unlisted';
@@ -928,6 +946,16 @@ trait AdminReportController
 
                 $profile->unlisted = true;
                 $profile->save();
+
+                if ($profile->remote_url) {
+                    ModeratedProfile::updateOrCreate([
+                        'profile_url' => $profile->remote_url,
+                        'profile_id' => $profile->id,
+                    ], [
+                        'is_unlisted' => true,
+                        'domain' => $profile->domain,
+                    ]);
+                }
 
                 foreach (Status::whereProfileId($profile->id)->cursor() as $status) {
                     $status->scope = 'private';
@@ -981,6 +1009,16 @@ trait AdminReportController
                 abort_if($profile->user && $profile->user->is_admin, 400, 'Cannot delete an admin account.');
 
                 $ts = now()->addMonth();
+
+                if ($profile->remote_url) {
+                    ModeratedProfile::updateOrCreate([
+                        'profile_url' => $profile->remote_url,
+                        'profile_id' => $profile->id,
+                    ], [
+                        'is_banned' => true,
+                        'domain' => $profile->domain,
+                    ]);
+                }
 
                 if ($profile->user_id) {
                     $user = $profile->user;
@@ -1354,7 +1392,7 @@ trait AdminReportController
     {
         $this->validate($request, [
             'id' => 'required|exists:remote_reports,id',
-            'action' => 'required|in:mark-read,cw-posts,unlist-posts,delete-posts,private-posts,mark-all-read-by-domain,mark-all-read-by-username,cw-all-posts,private-all-posts,unlist-all-posts'
+            'action' => 'required|in:mark-read,cw-posts,unlist-posts,delete-posts,private-posts,mark-all-read-by-domain,mark-all-read-by-username,cw-all-posts,private-all-posts,unlist-all-posts',
         ]);
 
         $report = RemoteReport::findOrFail($request->input('id'));
@@ -1373,11 +1411,11 @@ trait AdminReportController
                 break;
             case 'cw-posts':
                 $statuses = Status::find($report->status_ids);
-                foreach($statuses as $status) {
-                    if($report->account_id != $status->profile_id) {
+                foreach ($statuses as $status) {
+                    if ($report->account_id != $status->profile_id) {
                         continue;
                     }
-                    if(!$status->is_nsfw) {
+                    if (! $status->is_nsfw) {
                         $ogNonCwStatuses[] = $status->id;
                     }
                     $status->is_nsfw = true;
@@ -1388,11 +1426,11 @@ trait AdminReportController
                 $report->save();
                 break;
             case 'cw-all-posts':
-                foreach(Status::whereProfileId($report->account_id)->lazyById(50, 'id') as $status) {
-                    if($status->is_nsfw || $status->reblog_of_id) {
+                foreach (Status::whereProfileId($report->account_id)->lazyById(50, 'id') as $status) {
+                    if ($status->is_nsfw || $status->reblog_of_id) {
                         continue;
                     }
-                    if(!$status->is_nsfw) {
+                    if (! $status->is_nsfw) {
                         $ogNonCwStatuses[] = $status->id;
                     }
                     $status->is_nsfw = true;
@@ -1402,11 +1440,11 @@ trait AdminReportController
                 break;
             case 'unlist-posts':
                 $statuses = Status::find($report->status_ids);
-                foreach($statuses as $status) {
-                    if($report->account_id != $status->profile_id) {
+                foreach ($statuses as $status) {
+                    if ($report->account_id != $status->profile_id) {
                         continue;
                     }
-                    if($status->scope === 'public') {
+                    if ($status->scope === 'public') {
                         $ogPublicStatuses[] = $status->id;
                         $status->scope = 'unlisted';
                         $status->visibility = 'unlisted';
@@ -1418,8 +1456,8 @@ trait AdminReportController
                 $report->save();
                 break;
             case 'unlist-all-posts':
-                foreach(Status::whereProfileId($report->account_id)->lazyById(50, 'id') as $status) {
-                    if($status->visibility !== 'public' || $status->reblog_of_id) {
+                foreach (Status::whereProfileId($report->account_id)->lazyById(50, 'id') as $status) {
+                    if ($status->visibility !== 'public' || $status->reblog_of_id) {
                         continue;
                     }
                     $ogPublicStatuses[] = $status->id;
@@ -1431,12 +1469,12 @@ trait AdminReportController
                 break;
             case 'private-posts':
                 $statuses = Status::find($report->status_ids);
-                foreach($statuses as $status) {
-                    if($report->account_id != $status->profile_id) {
+                foreach ($statuses as $status) {
+                    if ($report->account_id != $status->profile_id) {
                         continue;
                     }
-                    if(in_array($status->scope, ['public', 'unlisted', 'private'])) {
-                        if($status->scope === 'public') {
+                    if (in_array($status->scope, ['public', 'unlisted', 'private'])) {
+                        if ($status->scope === 'public') {
                             $ogPublicStatuses[] = $status->id;
                         }
                         $status->scope = 'private';
@@ -1449,13 +1487,13 @@ trait AdminReportController
                 $report->save();
                 break;
             case 'private-all-posts':
-                foreach(Status::whereProfileId($report->account_id)->lazyById(50, 'id') as $status) {
-                    if(!in_array($status->visibility, ['public', 'unlisted']) || $status->reblog_of_id) {
+                foreach (Status::whereProfileId($report->account_id)->lazyById(50, 'id') as $status) {
+                    if (! in_array($status->visibility, ['public', 'unlisted']) || $status->reblog_of_id) {
                         continue;
                     }
-                    if($status->visibility === 'public') {
+                    if ($status->visibility === 'public') {
                         $ogPublicStatuses[] = $status->id;
-                    } else if($status->visibility === 'unlisted') {
+                    } elseif ($status->visibility === 'unlisted') {
                         $ogUnlistedStatuses[] = $status->id;
                     }
                     $status->visibility = 'private';
@@ -1466,8 +1504,8 @@ trait AdminReportController
                 break;
             case 'delete-posts':
                 $statuses = Status::find($report->status_ids);
-                foreach($statuses as $status) {
-                    if($report->account_id != $status->profile_id) {
+                foreach ($statuses as $status) {
+                    if ($report->account_id != $status->profile_id) {
                         continue;
                     }
                     StatusDelete::dispatch($status);
@@ -1484,16 +1522,16 @@ trait AdminReportController
                 break;
         }
 
-        if($ogPublicStatuses && count($ogPublicStatuses)) {
-            Storage::disk('local')->put('mod-log-cache/' . $report->account_id . '/' . now()->format('Y-m-d') . '-og-public-statuses.json', json_encode($ogPublicStatuses, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
+        if ($ogPublicStatuses && count($ogPublicStatuses)) {
+            Storage::disk('local')->put('mod-log-cache/'.$report->account_id.'/'.now()->format('Y-m-d').'-og-public-statuses.json', json_encode($ogPublicStatuses, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         }
 
-        if($ogNonCwStatuses && count($ogNonCwStatuses)) {
-            Storage::disk('local')->put('mod-log-cache/' . $report->account_id . '/' . now()->format('Y-m-d') . '-og-noncw-statuses.json', json_encode($ogNonCwStatuses, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
+        if ($ogNonCwStatuses && count($ogNonCwStatuses)) {
+            Storage::disk('local')->put('mod-log-cache/'.$report->account_id.'/'.now()->format('Y-m-d').'-og-noncw-statuses.json', json_encode($ogNonCwStatuses, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         }
 
-        if($ogUnlistedStatuses && count($ogUnlistedStatuses)) {
-            Storage::disk('local')->put('mod-log-cache/' . $report->account_id . '/' . now()->format('Y-m-d') . '-og-unlisted-statuses.json', json_encode($ogUnlistedStatuses, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
+        if ($ogUnlistedStatuses && count($ogUnlistedStatuses)) {
+            Storage::disk('local')->put('mod-log-cache/'.$report->account_id.'/'.now()->format('Y-m-d').'-og-unlisted-statuses.json', json_encode($ogUnlistedStatuses, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         }
 
         ModLogService::boot()
@@ -1504,18 +1542,19 @@ trait AdminReportController
             ->action('admin.report.moderate')
             ->metadata([
                 'action' => $request->input('action'),
-                'duration_active' => now()->parse($report->created_at)->diffForHumans()
+                'duration_active' => now()->parse($report->created_at)->diffForHumans(),
             ])
             ->accessLevel('admin')
             ->save();
 
-        if($report->status_ids) {
-            foreach($report->status_ids as $sid) {
+        if ($report->status_ids) {
+            foreach ($report->status_ids as $sid) {
                 RemoteReport::whereNull('action_taken_at')
                     ->whereJsonContains('status_ids', [$sid])
                     ->update(['action_taken_at' => now()]);
             }
         }
+
         return [200];
     }
 }
