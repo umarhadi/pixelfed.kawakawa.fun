@@ -5,6 +5,8 @@
 ### Added
 - Implement Admin Domain Blocks API (Mastodon API Compatible) [ThisIsMissEm](https://github.com/ThisIsMissEm) ([#5021](https://github.com/pixelfed/pixelfed/pull/5021))
 - Authorize Interaction support (for handling remote interactions) ([4ca7c6c3](https://github.com/pixelfed/pixelfed/commit/4ca7c6c3))
+- Contact Form Admin Responses ([52cc6090](https://github.com/pixelfed/pixelfed/commit/52cc6090))
+- Profile Carousels ([8af77a3f](https://github.com/pixelfed/pixelfed/commit/8af77a3f))
 
 ### Federation
 - Add ActiveSharedInboxService, for efficient sharedInbox caching ([1a6a3397](https://github.com/pixelfed/pixelfed/commit/1a6a3397))
@@ -28,6 +30,10 @@
 - Update UserAccountDelete command, increase sharedInbox ttl from 12h to 14d ([be02f48a](https://github.com/pixelfed/pixelfed/commit/be02f48a))
 - Update HttpSignature, add signRaw method and improve error checking ([d4cf9181](https://github.com/pixelfed/pixelfed/commit/d4cf9181))
 - Update AP helpers, add forceBanCheck param to validateUrl method ([42424028](https://github.com/pixelfed/pixelfed/commit/42424028))
+- Update layout, add og:logo ([4cc576e1](https://github.com/pixelfed/pixelfed/commit/4cc576e1))
+- Update ReblogService, fix cache sync issues ([3de8ceca](https://github.com/pixelfed/pixelfed/commit/3de8ceca))
+- Update config, allow Beagle discover service to be disabled ([de4ce3c8](https://github.com/pixelfed/pixelfed/commit/de4ce3c8))
+- Update ApiV1Dot1Controller, allow upto 5 similar push tokens ([7820b506](https://github.com/pixelfed/pixelfed/commit/7820b506))
 -  ([](https://github.com/pixelfed/pixelfed/commit/))
 
 ## [v0.12.3 (2024-07-01)](https://github.com/pixelfed/pixelfed/compare/v0.12.2...v0.12.3)

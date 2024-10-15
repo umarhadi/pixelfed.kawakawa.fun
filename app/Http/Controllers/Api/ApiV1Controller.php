@@ -1878,7 +1878,7 @@ class ApiV1Controller extends Controller
         $media->original_sha256 = $hash;
         $media->size = $photo->getSize();
         $media->mime = $mime;
-        $media->caption = $request->input('description');
+        $media->caption = $request->input('description') ?? "";
         $media->filter_class = $filterClass;
         $media->filter_name = $filterName;
         if ($license) {
@@ -2106,7 +2106,7 @@ class ApiV1Controller extends Controller
         $media->original_sha256 = $hash;
         $media->size = $photo->getSize();
         $media->mime = $mime;
-        $media->caption = $request->input('description');
+        $media->caption = $request->input('description') ?? "";
         $media->filter_class = $filterClass;
         $media->filter_name = $filterName;
         if ($license) {
