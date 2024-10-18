@@ -1593,6 +1593,25 @@ trait AdminReportController
         return new AdminModeratedProfileResource($profile);
     }
 
+    public function exportModeratedProfiles(Request $request)
+    {
+        return response()->streamDownload(function () {
+            $profiles = ModeratedProfile::get();
+            $res = AdminModeratedProfileResource::collection($profiles);
+            echo json_encode([
+                '_pixelfed_export' => true,
+                'meta' => [
+                    'ns' => 'https://pixelfed.org',
+                    'origin' => config('pixelfed.domain.app'),
+                    'date' => now()->format('c'),
+                    'type' => 'moderated-profiles',
+                    'version' => "1.0"
+                ],
+                'data' => $res
+            ], JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);
+        }, 'data-export.json');
+    }
+
     public function deleteModeratedProfile(Request $request)
     {
         $this->validate($request, [
