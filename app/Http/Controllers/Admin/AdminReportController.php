@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\AccountInterstitial;
+use App\Http\Resources\Admin\AdminModeratedProfileResource;
 use App\Http\Resources\AdminRemoteReport;
 use App\Http\Resources\AdminReport;
 use App\Http\Resources\AdminSpamReport;
@@ -25,6 +26,7 @@ use App\Services\StatusService;
 use App\Status;
 use App\Story;
 use App\User;
+use App\Util\ActivityPub\Helpers;
 use Cache;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -1556,5 +1558,177 @@ trait AdminReportController
         }
 
         return [200];
+    }
+
+    public function getModeratedProfiles(Request $request)
+    {
+        $this->validate($request, [
+            'search' => 'sometimes|string|min:3|max:120',
+        ]);
+
+        if ($request->filled('search')) {
+            $query = '%'.$request->input('search').'%';
+            $profiles = DB::table('moderated_profiles')
+                ->join('profiles', 'moderated_profiles.profile_id', '=', 'profiles.id')
+                ->where('profiles.username', 'LIKE', $query)
+                ->select('moderated_profiles.*', 'profiles.username')
+                ->orderByDesc('moderated_profiles.id')
+                ->cursorPaginate(5);
+
+            return AdminModeratedProfileResource::collection($profiles);
+        }
+        $profiles = ModeratedProfile::orderByDesc('id')->cursorPaginate(10);
+
+        return AdminModeratedProfileResource::collection($profiles);
+    }
+
+    public function getModeratedProfile(Request $request)
+    {
+        $this->validate($request, [
+            'id' => 'required',
+        ]);
+
+        $profile = ModeratedProfile::findOrFail($request->input('id'));
+
+        return new AdminModeratedProfileResource($profile);
+    }
+
+    public function deleteModeratedProfile(Request $request)
+    {
+        $this->validate($request, [
+            'id' => 'required',
+        ]);
+
+        $profile = ModeratedProfile::findOrFail($request->input('id'));
+
+        ModLogService::boot()
+            ->objectUid($profile->profile_id)
+            ->objectId($profile->id)
+            ->objectType('App\Models\ModeratedProfile::class')
+            ->user(request()->user())
+            ->action('admin.moderated-profiles.delete')
+            ->metadata([
+                'profile_url' => $profile->profile_url,
+                'profile_id' => $profile->profile_id,
+                'domain' => $profile->domain,
+                'note' => $profile->note,
+                'is_banned' => $profile->is_banned,
+                'is_nsfw' => $profile->is_nsfw,
+                'is_unlisted' => $profile->is_unlisted,
+                'is_noautolink' => $profile->is_noautolink,
+                'is_nodms' => $profile->is_nodms,
+                'is_notrending' => $profile->is_notrending,
+            ])
+            ->accessLevel('admin')
+            ->save();
+
+        $profile->delete();
+
+        return ['status' => 200, 'message' => 'Successfully deleted moderated profile!'];
+    }
+
+    public function updateModeratedProfile(Request $request)
+    {
+        $this->validate($request, [
+            'id' => 'required|exists:moderated_profiles',
+            'note' => 'sometimes|nullable|string|max:500',
+            'is_banned' => 'required|boolean',
+            'is_noautolink' => 'required|boolean',
+            'is_nodms' => 'required|boolean',
+            'is_notrending' => 'required|boolean',
+            'is_nsfw' => 'required|boolean',
+            'is_unlisted' => 'required|boolean',
+        ]);
+
+        $fields = [
+            'note',
+            'is_banned',
+            'is_noautolink',
+            'is_nodms',
+            'is_notrending',
+            'is_nsfw',
+            'is_unlisted',
+        ];
+
+        $profile = ModeratedProfile::findOrFail($request->input('id'));
+        $profile->update($request->only($fields));
+
+        ModLogService::boot()
+            ->objectUid($profile->profile_id)
+            ->objectId($profile->id)
+            ->objectType('App\Models\ModeratedProfile::class')
+            ->user(request()->user())
+            ->action('admin.moderated-profiles.update')
+            ->metadata($request->only($fields))
+            ->accessLevel('admin')
+            ->save();
+
+        return [200];
+    }
+
+    public function createModeratedProfile(Request $request)
+    {
+        $this->validate($request, [
+            'url' => 'required|url|starts_with:https://',
+        ]);
+
+        $url = $request->input('url');
+        $host = parse_url($url, PHP_URL_HOST);
+
+        abort_if($host === config('pixelfed.domain.app'), 400, 'You cannot add local users!');
+
+        $exists = ModeratedProfile::whereProfileUrl($url)->exists();
+        abort_if($exists, 400, 'Moderated profile already exists!');
+
+        $profile = Profile::whereRemoteUrl($url)->first();
+
+        if ($profile) {
+            $rec = ModeratedProfile::updateOrCreate([
+                'profile_id' => $profile->id,
+            ], [
+                'profile_url' => $profile->remote_url,
+                'domain' => $profile->domain,
+            ]);
+
+            ModLogService::boot()
+                ->objectUid($rec->profile_id)
+                ->objectId($rec->id)
+                ->objectType('App\Models\ModeratedProfile::class')
+                ->user(request()->user())
+                ->action('admin.moderated-profiles.create')
+                ->metadata([
+                    'profile_existed' => true,
+                ])
+                ->accessLevel('admin')
+                ->save();
+
+            return $rec;
+        }
+
+        $remoteSearch = Helpers::profileFetch($url);
+
+        if ($remoteSearch) {
+            $rec = ModeratedProfile::updateOrCreate([
+                'profile_id' => $remoteSearch->id,
+            ], [
+                'profile_url' => $remoteSearch->remote_url,
+                'domain' => $remoteSearch->domain,
+            ]);
+
+            ModLogService::boot()
+                ->objectUid($rec->profile_id)
+                ->objectId($rec->id)
+                ->objectType('App\Models\ModeratedProfile::class')
+                ->user(request()->user())
+                ->action('admin.moderated-profiles.create')
+                ->metadata([
+                    'profile_existed' => false,
+                ])
+                ->accessLevel('admin')
+                ->save();
+
+            return $rec;
+        }
+        abort(400, 'Invalid account');
     }
 }
