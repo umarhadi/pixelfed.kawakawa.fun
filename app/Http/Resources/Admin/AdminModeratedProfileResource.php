@@ -19,7 +19,10 @@ class AdminModeratedProfileResource extends JsonResource
         $profile = Profile::withTrashed()->find($this->profile_id);
         if ($profile) {
             $profileObj = [
+                'name' => $profile->name,
                 'username' => $profile->username,
+                'username_str' => explode('@', $profile->username)[1],
+                'remote_url' => $profile->remote_url,
             ];
         }
 
