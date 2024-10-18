@@ -1573,7 +1573,7 @@ trait AdminReportController
                 ->where('profiles.username', 'LIKE', $query)
                 ->select('moderated_profiles.*', 'profiles.username')
                 ->orderByDesc('moderated_profiles.id')
-                ->cursorPaginate(5);
+                ->cursorPaginate(10);
 
             return AdminModeratedProfileResource::collection($profiles);
         }
