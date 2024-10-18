@@ -39,7 +39,7 @@ class AdminModeratedProfileResource extends JsonResource
             'is_noautolink' => (bool) $this->is_noautolink,
             'is_nodms' => (bool) $this->is_nodms,
             'is_notrending' => (bool) $this->is_notrending,
-            'created_at' => $this->created_at->format('c'),
+            'created_at' => now()->parse($this->created_at)->format('c'),
         ];
     }
 }
