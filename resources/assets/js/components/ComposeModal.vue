@@ -1813,8 +1813,8 @@ export default {
                         self.updateFilteringMedia();
                     }).catch(err => {
                     });
-                });
-            }, media.mime, 0.9);
+                }, media.mime, 0.9);
+            });
             ctx.clearRect(0, 0, image.width, image.height);
         },
 
