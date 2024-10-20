@@ -1095,11 +1095,12 @@ export default {
 		},
 
 		defineErrorMessage(errObject) {
+			let msg;
 			if (errObject.response) {
-				let msg = errObject.response.data.message ? errObject.response.data.message : 'An unexpected error occured.';
+				msg = errObject.response.data.message ? errObject.response.data.message : 'An unexpected error occured.';
 			}
 			else {
-				let msg = errObject.message;
+				msg = errObject.message;
 			}
 			return swal('Oops, something went wrong!', msg, 'error');
 		},
