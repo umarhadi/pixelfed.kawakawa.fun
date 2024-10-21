@@ -1831,7 +1831,7 @@ export default {
                     quality: 1,
                 });
             } else {
-                blob = await new Promise(resolve => {
+                blob = await new Promise((resolve, reject) => {
                     canvas.toBlob(blob => {
                         if(blob) {
                             resolve(blob);
