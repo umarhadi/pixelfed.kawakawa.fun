@@ -9,6 +9,7 @@ use App\Jobs\MediaPipeline\MediaStoragePipeline;
 use App\Jobs\StatusPipeline\StatusReplyPipeline;
 use App\Jobs\StatusPipeline\StatusTagsPipeline;
 use App\Media;
+use App\Models\ModeratedProfile;
 use App\Models\Poll;
 use App\Profile;
 use App\Services\Account\AccountStatService;
@@ -814,6 +815,11 @@ class Helpers
         if (! self::validateUrl($res['id'])) {
             return;
         }
+
+        if (ModeratedProfile::whereProfileUrl($res['id'])->whereIsBanned(true)->exists()) {
+            return;
+        }
+
         $urlDomain = parse_url($url, PHP_URL_HOST);
         $domain = parse_url($res['id'], PHP_URL_HOST);
         if (strtolower($urlDomain) !== strtolower($domain)) {
