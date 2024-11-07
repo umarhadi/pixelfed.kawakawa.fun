@@ -384,7 +384,7 @@
                                 <p class="small mb-0 text-wrap" style="max-width: 300px;word-break: break-all;">{{ report.message && report.message.length > 120 ? report.message.slice(0, 120) + '...' : report.message }}</p>
                             </td>
                             <td class="font-weight-bold align-middle">{{ timeAgo(report.created_at) }}</td>
-                            <td class="align-middle"><a href="#" class="btn btn-primary btn-sm">View</a></td>
+                            <td class="align-middle"><a href="#" class="btn btn-primary btn-sm" @click.prevent="showRemoteReport(report)">View</a></td>
                         </tr>
                     </tbody>
                 </table>
