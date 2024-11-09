@@ -7,6 +7,7 @@
 - Authorize Interaction support (for handling remote interactions) ([4ca7c6c3](https://github.com/pixelfed/pixelfed/commit/4ca7c6c3))
 - Contact Form Admin Responses ([52cc6090](https://github.com/pixelfed/pixelfed/commit/52cc6090))
 - Profile Carousels ([8af77a3f](https://github.com/pixelfed/pixelfed/commit/8af77a3f))
+- Moderated Profiles ([39f16321](https://github.com/pixelfed/pixelfed/commit/39f16321))
 
 ### Federation
 - Add ActiveSharedInboxService, for efficient sharedInbox caching ([1a6a3397](https://github.com/pixelfed/pixelfed/commit/1a6a3397))
@@ -34,6 +35,7 @@
 - Update ReblogService, fix cache sync issues ([3de8ceca](https://github.com/pixelfed/pixelfed/commit/3de8ceca))
 - Update config, allow Beagle discover service to be disabled ([de4ce3c8](https://github.com/pixelfed/pixelfed/commit/de4ce3c8))
 - Update ApiV1Dot1Controller, allow upto 5 similar push tokens ([7820b506](https://github.com/pixelfed/pixelfed/commit/7820b506))
+- Update AdminReports, add missing click handler. Fixes #5332 ([fe48b8ad](https://github.com/pixelfed/pixelfed/commit/fe48b8ad))
 -  ([](https://github.com/pixelfed/pixelfed/commit/))
 
 ## [v0.12.3 (2024-07-01)](https://github.com/pixelfed/pixelfed/compare/v0.12.2...v0.12.3)
