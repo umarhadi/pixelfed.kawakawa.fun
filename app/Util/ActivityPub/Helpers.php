@@ -307,7 +307,8 @@ class Helpers
             $isMoreThanTenYearsOld = $date->lt($tenYearsAgo);
             $tomorrow = $now->copy()->addDay();
             $isMoreThanOneDayFuture = $date->gt($tomorrow);
-            return !($isMoreThanTenYearsOld || $isMoreThanOneDayFuture);
+
+            return ! ($isMoreThanTenYearsOld || $isMoreThanOneDayFuture);
         } catch (\Exception $e) {
             return false;
         }
@@ -344,7 +345,7 @@ class Helpers
             return;
         }
 
-        if(!self::validateTimestamp($res['published'])) {
+        if (! self::validateTimestamp($res['published'])) {
             return;
         }
 
