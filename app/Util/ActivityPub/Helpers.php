@@ -298,6 +298,22 @@ class Helpers
         return null;
     }
 
+    public static function validateTimestamp($timestamp)
+    {
+        try {
+            $date = Carbon::parse($timestamp);
+            $now = Carbon::now();
+            $tenYearsAgo = $now->copy()->subYears(10);
+            $isMoreThanTenYearsOld = $date->lt($tenYearsAgo);
+            $tomorrow = $now->copy()->addDay();
+            $isMoreThanOneDayFuture = $date->gt($tomorrow);
+
+            return ! ($isMoreThanTenYearsOld || $isMoreThanOneDayFuture);
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
     public static function statusFirstOrFetch($url, $replyTo = false)
     {
         $url = self::validateUrl($url);
@@ -326,6 +342,10 @@ class Helpers
         $res = self::fetchFromUrl($url);
 
         if (! $res || empty($res) || isset($res['error']) || ! isset($res['@context']) || ! isset($res['published'])) {
+            return;
+        }
+
+        if (! self::validateTimestamp($res['published'])) {
             return;
         }
 
