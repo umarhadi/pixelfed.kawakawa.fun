@@ -3,6 +3,8 @@
 ## [Unreleased](https://github.com/pixelfed/pixelfed/compare/v0.12.3...dev)
 - Update AP helpers, reject statuses with invalid dates ([960f3849](https://github.com/pixelfed/pixelfed/commit/960f3849))
 - Update DirectMessage API, fix broken threading ([044d410c](https://github.com/pixelfed/pixelfed/commit/044d410c))
+- Update Status caption render logic ([fb8dbb95](https://github.com/pixelfed/pixelfed/commit/fb8dbb95))
+- Update ApiV1Controller, fix bookmark bug. Closes #5216 ([9f7cc52c](https://github.com/pixelfed/pixelfed/commit/9f7cc52c))
 -  ([](https://github.com/pixelfed/pixelfed/commit/))
 
 ## [v0.12.4 (2024-11-08)](https://github.com/pixelfed/pixelfed/compare/v0.12.4...dev)
