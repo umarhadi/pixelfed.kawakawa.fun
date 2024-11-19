@@ -417,8 +417,8 @@ class Inbox
             return;
         }
 
-        $msg = $activity['content'];
-        $msgText = strip_tags($activity['content']);
+        $msg = Purify::clean($activity['content']);
+        $msgText = strip_tags($msg);
 
         if (Str::startsWith($msgText, '@'.$profile->username)) {
             $len = strlen('@'.$profile->username);
