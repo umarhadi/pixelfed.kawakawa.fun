@@ -421,9 +421,10 @@ class DirectMessageController extends Controller
         if ($min_id) {
             $res = DirectMessage::select('*')
                 ->where('id', '>', $min_id)
-                ->where(function ($q) use ($pid, $uid) {
-                    return $q->where([['from_id', $pid], ['to_id', $uid],
-                    ])->orWhere([['from_id', $uid], ['to_id', $pid]]);
+                ->where(function ($query) use ($pid, $uid) {
+                    $query->where('from_id', $pid)->where('to_id', $uid);
+                })->orWhere(function ($query) use ($pid, $uid) {
+                    $query->where('from_id', $uid)->where('to_id', $pid);
                 })
                 ->orderBy('id', 'asc')
                 ->take(8)
@@ -432,17 +433,19 @@ class DirectMessageController extends Controller
         } elseif ($max_id) {
             $res = DirectMessage::select('*')
                 ->where('id', '<', $max_id)
-                ->where(function ($q) use ($pid, $uid) {
-                    return $q->where([['from_id', $pid], ['to_id', $uid],
-                    ])->orWhere([['from_id', $uid], ['to_id', $pid]]);
+                ->where(function ($query) use ($pid, $uid) {
+                    $query->where('from_id', $pid)->where('to_id', $uid);
+                })->orWhere(function ($query) use ($pid, $uid) {
+                    $query->where('from_id', $uid)->where('to_id', $pid);
                 })
                 ->orderBy('id', 'desc')
                 ->take(8)
                 ->get();
         } else {
-            $res = DirectMessage::where(function ($q) use ($pid, $uid) {
-                return $q->where([['from_id', $pid], ['to_id', $uid],
-                ])->orWhere([['from_id', $uid], ['to_id', $pid]]);
+            $res = DirectMessage::where(function ($query) use ($pid, $uid) {
+                $query->where('from_id', $pid)->where('to_id', $uid);
+            })->orWhere(function ($query) use ($pid, $uid) {
+                $query->where('from_id', $uid)->where('to_id', $pid);
             })
                 ->orderBy('id', 'desc')
                 ->take(8)
