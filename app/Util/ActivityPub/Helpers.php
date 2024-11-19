@@ -694,8 +694,7 @@ class Helpers
         $status->url = isset($res['url']) ? $res['url'] : $url;
         $status->uri = isset($res['url']) ? $res['url'] : $url;
         $status->object_url = $id;
-        $status->caption = strip_tags($res['content']);
-        $status->rendered = Purify::clean($res['content']);
+        $status->caption = strip_tags(Purify::clean($res['content']));
         $status->created_at = Carbon::parse($ts)->tz('UTC');
         $status->in_reply_to_id = null;
         $status->local = false;

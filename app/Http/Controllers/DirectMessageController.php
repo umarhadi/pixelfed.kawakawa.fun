@@ -22,6 +22,7 @@ use App\Services\WebfingerService;
 use App\Status;
 use App\UserFilter;
 use App\Util\ActivityPub\Helpers;
+use App\Util\Lexer\Autolink;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -326,7 +327,6 @@ class DirectMessageController extends Controller
         $status = new Status;
         $status->profile_id = $profile->id;
         $status->caption = $msg;
-        $status->rendered = $msg;
         $status->visibility = 'direct';
         $status->scope = 'direct';
         $status->in_reply_to_profile_id = $recipient->id;
@@ -636,7 +636,6 @@ class DirectMessageController extends Controller
         $status = new Status;
         $status->profile_id = $profile->id;
         $status->caption = null;
-        $status->rendered = null;
         $status->visibility = 'direct';
         $status->scope = 'direct';
         $status->in_reply_to_profile_id = $recipient->id;
@@ -830,6 +829,11 @@ class DirectMessageController extends Controller
     {
         $profile = $dm->author;
         $url = $dm->recipient->sharedInbox ?? $dm->recipient->inbox_url;
+        $status = $dm->status;
+
+        if (! $status) {
+            return;
+        }
 
         $tags = [
             [
@@ -838,6 +842,8 @@ class DirectMessageController extends Controller
                 'name' => $dm->recipient->emailUrl(),
             ],
         ];
+
+        $content = $status->caption ? Autolink::create()->autolink($status->caption) : null;
 
         $body = [
             '@context' => [
@@ -854,7 +860,7 @@ class DirectMessageController extends Controller
                 'id' => $dm->status->url(),
                 'type' => 'Note',
                 'summary' => null,
-                'content' => $dm->status->rendered ?? $dm->status->caption,
+                'content' => $content,
                 'inReplyTo' => null,
                 'published' => $dm->status->created_at->toAtomString(),
                 'url' => $dm->status->url(),
