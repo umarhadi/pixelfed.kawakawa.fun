@@ -552,7 +552,6 @@ class Helpers
                 'url' => $url,
                 'object_url' => $id,
                 'caption' => isset($activity['content']) ? Purify::clean(strip_tags($activity['content'])) : null,
-                'rendered' => isset($activity['content']) ? Purify::clean($activity['content']) : null,
                 'created_at' => Carbon::parse($ts)->tz('UTC'),
                 'in_reply_to_id' => $reply_to,
                 'local' => false,
